@@ -2,7 +2,9 @@ NAME = ircserv
 
 SRC = main.cpp \
 	  server.cpp \
-	  commands.cpp
+	  commands.cpp \
+	  channel.cpp \
+	  config.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

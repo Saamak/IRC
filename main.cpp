@@ -1,7 +1,7 @@
-#include "server.hpp"
+#include "includes/server.hpp"
 #include <cstring> // Pour utiliser strcmp
+#include "includes/config.hpp"
 
-const char* SECURE_PASSWD = "D789";
 
 int check_input(int ac, char **av)
 {
