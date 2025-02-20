@@ -43,7 +43,6 @@ bool Server::init()
     return true;
 }
 
-
 // Fonction pour diviser une chaîne de caractères par un délimiteur donné
 std::vector<std::string> split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;

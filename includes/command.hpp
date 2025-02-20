@@ -18,9 +18,9 @@ public:
     void exec(const std::string &client_data);
     command(Server& server);
     void pass(const std::string &client_data);
-    void nick();
-    void user();
-    void join();
+    void nick(const std::string &client_data);
+    // void user();
+    // void join();
     // void part();
     // void privmsg();
     // void notice();

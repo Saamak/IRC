@@ -10,7 +10,7 @@ void command::pass(const std::string &client_data)
     std::cout << B_Y << "PASS Checking" << RESET << std::endl;
     std::cout << B_R << client_data << RESET << std::endl;
 
-    std::istringstream iss(client_data);
+    std::istringstream iss(client_data); // transforme la string en flux batard
     std::string command;
     std::string password;
 
@@ -30,9 +30,11 @@ void command::pass(const std::string &client_data)
     }
 }
 
-// void command::nick(const std::string &client_data) {
-//     std::cout << "NICK" << std::endl;
-// }
+void command::nick(const std::string &client_data) {
+    std::cout << "NICK" << std::endl;
+    (void)client_data;
+    // traitement du user a add dans la classe client
+}
 
 // void command::user(const std::string &client_data) {
 //     std::cout << "USER" << std::endl;
