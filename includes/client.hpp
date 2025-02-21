@@ -1,14 +1,22 @@
-#include "server.hpp"
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
+
+#include <string>
+#include <iostream>
 #include "colors.h"
 
+class client {
+private:
+    std::string _nickname;
+    bool _passMatch;
 
-class client{
-    private :
-        std::string _nickname;
-
-    public :
-        client();
-        ~client();
-        std::string getNickname();
-        void setNickname(std::string nickName);
+public:
+    client();
+    ~client();
+    std::string getNickname();
+    void setNickname(std::string nickName);
+    bool getMatch();
+    void setMatch(bool passMatch);
 };
+
+#endif // CLIENT_HPP

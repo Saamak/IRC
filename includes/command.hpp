@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include "server.hpp"
+#include "client.hpp"
 
 class command;
 // Déclaration du type de la fonction

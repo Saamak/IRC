@@ -5,8 +5,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "includes/command.hpp"
+#include <algorithm> 
 
-Server::Server(int port) : _port(port), _server_fd(-1) {
+Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
     std::memset(&_server_addr, 0, sizeof(_server_addr));
 }
 
@@ -172,4 +173,27 @@ void Server::stop() {
 
 void Server::addChannel(channel* new_channel) {
     channels_lst.push_back(new_channel);
+}
+
+void Server::addClient(client* newClient)
+{
+    client_lst.push_back(newClient);
+}
+
+void Server::removeClient(client* existingClient)
+{
+    // std::remove pour déplacer les éléments à supprimer à la fin du vecteur
+    std::vector<client*>::iterator it = std::remove(client_lst.begin(), client_lst.end(), existingClient);
+    // erase pour supprimer les éléments déplacés
+    client_lst.erase(it, client_lst.end());
+}
+
+client* Server::getNewClient() const
+{
+    return newClient;
+}
+
+void Server::setNewClient(client* client)
+{
+    newClient = client;
 }

@@ -4,13 +4,14 @@
 #include <sstream>
 #include "includes/channel.hpp"
 #include "includes/config.hpp"
+#include "includes/client.hpp"
 
 void command::pass(const std::string &client_data)
 {
     std::cout << B_Y << "PASS Checking" << RESET << std::endl;
     std::cout << B_R << client_data << RESET << std::endl;
 
-    std::istringstream iss(client_data); // transforme la string en flux batard
+    std::istringstream iss(client_data);
     std::string command;
     std::string password;
 
@@ -22,18 +23,37 @@ void command::pass(const std::string &client_data)
     {
         if(password != SECURE_PASSWD)
             P << B_R << "WRONG PASSWORD" <<RESET << E;
-        //Se casser de la
+        else
+        {
+            std::cout <<B_G<<"PASSWORD VALIDATED" <<RESET << E;
+            client* newClient = new client(); // Créer un nouvel objet client
+            newClient->setMatch(true);
+            _server.addClient(newClient); // Ajouter le client à la liste des clients du serveur
+            _server.setNewClient(newClient); // Stocker temporairement le client dans le serveur
+        }
     }
-    else {
-        std::cout <<B_G<<"PASSWORD VALIDATED" <<RESET << E;
-        //creer la classe USER
-    }
+    else
+        P << B_R << "Empty password" << RESET << E;
 }
 
 void command::nick(const std::string &client_data) {
     std::cout << "NICK" << std::endl;
-    (void)client_data;
-    // traitement du user a add dans la classe client
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string nickname;
+
+    // Extraire le premier mot (la commande)
+    iss >> command;
+    // Extraire le deuxième mot (le nickname)
+    iss >> nickname;
+
+    client* newClient = _server.getNewClient();
+    if (newClient != NULL) {
+        newClient->setNickname(nickname); // Définir le nickname pour le client
+        std::cout << "Nickname set to: " << newClient->getNickname() << std::endl;
+    } else {
+        std::cerr << "Error: No client created. Please provide a valid password first." << std::endl;
+    }
 }
 
 // void command::user(const std::string &client_data) {
@@ -99,9 +119,10 @@ void command::nick(const std::string &client_data) {
 //     std::cout << "WHOWAS" << std::endl;
 // }
 
-command::command(Server& server) : _server(server) {
+command::command(Server& server) : _server(server)
+{
     _cmds["PASS"] = &command::pass;
-    // _cmds["NICK"] = &command::nick;
+    _cmds["NICK"] = &command::nick;
     // _cmds["USER"] = &command::user;
     // _cmds["JOIN"] = &command::join;
     // _cmds["PART"] = &command::part;

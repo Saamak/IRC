@@ -2,7 +2,9 @@
 
 client::client()
 {
-    P << "Client constructor" << E;
+    _nickname = "unknown";
+    _passMatch = false;
+    P <<BOLD<< "Client constructor" <<RESET<< E;
 }
 
 client::~client()
@@ -18,6 +20,16 @@ std::string client::getNickname()
 void client::setNickname(std::string nickName)
 {
     _nickname = nickName;
+}
+
+bool client::getMatch()
+{
+    return (_passMatch);
+}
+
+void client::setMatch(bool passMatch)
+{
+    _passMatch = passMatch;
 }
 
 

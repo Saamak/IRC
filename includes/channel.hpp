@@ -8,6 +8,7 @@
 class channel{
     private :
         std::string _name;
+        std::vector<channel*> client_lst;
     public :
         channel(std::string name);
         ~channel();
