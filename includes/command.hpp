@@ -13,6 +13,7 @@ typedef void(command::*CommandFunction)(const std::string&);
 class command
 {
 public:
+    ~command();
     std::string userInput;
     std::map<std::string, CommandFunction> _cmds;
     Server& _server;
@@ -20,6 +21,7 @@ public:
     command(Server& server);
     void pass(const std::string &client_data);
     void nick(const std::string &client_data);
+    void myExit(const std::string &client_data);
     // void user();
     // void join();
     // void part();

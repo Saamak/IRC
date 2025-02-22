@@ -7,11 +7,18 @@
 #include "includes/command.hpp"
 #include <algorithm> 
 
+void    Server::setBoolExit(bool tmp)
+{
+    _exit = tmp;
+}
+
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
+    P <<BOLD <<"SERVEUR CONSTRUCTOR" <<RESET <<E;
     std::memset(&_server_addr, 0, sizeof(_server_addr));
 }
 
 Server::~Server() {
+    P <<BOLD <<"SERVEUR DESTRUCTOR" <<RESET <<E;
     if (_server_fd != -1)
         close(_server_fd);
 }
@@ -23,6 +30,7 @@ void Server::integrity(std::string client_data) {
 
 bool Server::init()
 {
+    _exit = false;
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0)
     {
@@ -73,20 +81,21 @@ void    Server::clientConnected(int i)
     client_pollfd.events = POLLIN;
     client_pollfd.revents = 0;
     _poll_fds.push_back(client_pollfd);
+
     std::string client_data;
     i++;
-        char buffer[1024];
-        int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-        buffer[bytes_read] = '\0';
-        std::string buff(buffer);
-        client_data = buff;
+       char buffer[1024];
+       int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
+       buffer[bytes_read] = '\0';
+       std::string buff(buffer);
+       client_data = buff;
     std::vector<std::string> tokens = split(client_data, '\n');
     std::string test("\n");
     tokens.push_back(test);
     for (int y = 0; y < 4; y++)
     {
-        std::cout << B_G << tokens[y] << RESET << E;
-        integrity(tokens[y]);
+       std::cout << B_G << tokens[y] << RESET << E;
+       integrity(tokens[y]);
     }
 }
 
@@ -113,12 +122,12 @@ int Server::HandleCommunication(int i)
     else
     {
         // Process client data
-        //buffer[bytes_read] = '\0';
-        //std::cout << B_Y "Received: " << RESET << buffer << std::endl;
-        //// Echo the data back to the client
-        //std::string client_data(buffer);
-        //integrity(client_data);
-        //write(_poll_fds[i].fd, buffer, bytes_read);
+        buffer[bytes_read] = '\0';
+        std::cout << B_Y "Received: " << RESET << buffer << std::endl;
+        // Echo the data back to the client
+        std::string client_data(buffer);
+        integrity(client_data);
+        write(_poll_fds[i].fd, buffer, bytes_read);
     }
     return (i);
 }
@@ -141,6 +150,8 @@ void Server::start()
 
     while (true)
     {
+        if (_exit == true)
+            return ;
         int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (poll_count < 0)
         {
@@ -149,6 +160,7 @@ void Server::start()
         }
         for (size_t i = 0; i < _poll_fds.size(); ++i)
         {
+            iterator = i; //PAS SURE car size_t to int et autre prblm;
             if (_poll_fds[i].revents & POLLIN)
             {
                 if (_poll_fds[i].fd == _server_fd)
@@ -191,6 +203,16 @@ void Server::removeClient(client* existingClient)
 client* Server::getNewClient() const
 {
     return newClient;
+}
+
+int Server::getSizeClientList() const
+{
+    return (client_lst.size());
+}
+
+client* Server::getClientList(int x) const
+{
+    return (client_lst[x]);
 }
 
 void Server::setNewClient(client* client)

@@ -5,6 +5,11 @@
 #include "includes/channel.hpp"
 #include "includes/config.hpp"
 #include "includes/client.hpp"
+#include <cstdlib> 
+
+command::~command(){
+    P <<BOLD<< "COMMAND DESTRUCTEUR" <<RESET<< E;
+}
 
 void command::pass(const std::string &client_data)
 {
@@ -30,6 +35,7 @@ void command::pass(const std::string &client_data)
             newClient->setMatch(true);
             _server.addClient(newClient); // Ajouter le client à la liste des clients du serveur
             _server.setNewClient(newClient); // Stocker temporairement le client dans le serveur
+            //delete(newClient);
         }
     }
     else
@@ -60,12 +66,34 @@ void command::nick(const std::string &client_data) {
 //     std::cout << "USER" << std::endl;
 // }
 
-// void command::join(const std::string &client_data) {
-//     std::cout << "JOIN" << std::endl;
-//     channel* new_channel = new channel("dani"); // Crée un nouvel objet channel
-//     _server.addChannel(new_channel); // Ajoute le nouvel objet channel au vecteur du serveur
-//     P << "Channel created: " << new_channel->getName() << E;
-// }
+void command::join(const std::string &client_data) {
+    std::cout << "JOIN" << std::endl;
+
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string channel_name;
+
+    // Extraire le premier mot (la commande)
+    iss >> command;
+    // Extraire le deuxième mot (le channel_name)
+    iss >> channel_name;
+
+    for (int x = 0; x < _server.channels_lst.size(); x++)
+    {
+        if (_server.channels_lst[x].getName() == channel_name)
+            if (_server.channels_lst[x].IsInChannel(_server.client_lst[i - 1].getNickname())); // getNickname ne retour pas un const et IsInChannel en prends un.
+                _server.channels_lst.addClient(_server.client_lst[iterator - 1]); //Ajoute le client si channel_name correspond a un chan existant et si le client n'est pas dans ce channel.
+            P << "BRAVO" << E;
+    }
+    else
+    {
+        //CREER LE CHAN, passer le client en operator.
+    }
+
+
+
+    P << "Channel created: " << new_channel->getName() << E;
+}
 
 // void command::part() {
 //     std::cout << "PART" << std::endl;
@@ -119,12 +147,20 @@ void command::nick(const std::string &client_data) {
 //     std::cout << "WHOWAS" << std::endl;
 // }
 
+void command::myExit(const std::string &client_data)
+{
+    (void)client_data;
+    delete(_server.getNewClient());
+    _server.setNewClient(NULL); // Réinitialiser le pointeur
+    _server.setBoolExit(true);
+}
+
 command::command(Server& server) : _server(server)
 {
     _cmds["PASS"] = &command::pass;
     _cmds["NICK"] = &command::nick;
     // _cmds["USER"] = &command::user;
-    // _cmds["JOIN"] = &command::join;
+    _cmds["JOIN"] = &command::join;
     // _cmds["PART"] = &command::part;
     // _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
@@ -138,6 +174,8 @@ command::command(Server& server) : _server(server)
     // _cmds["WHO"] = &command::who;
     // _cmds["WHOIS"] = &command::whois;
     // _cmds["WHOWAS"] = &command::whowas;
+
+    _cmds["MYEXIT"] = &command::myExit;
 }
 
 void command::exec(const std::string &client_data) {

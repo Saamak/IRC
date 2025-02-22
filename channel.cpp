@@ -15,10 +15,20 @@ std::string channel::getName() const
     return _name;
 }
 
-// void channel::addClient(client* newClient)
-// {
-//     _clients.push_back(newClient);
-// }
+void channel::addClient(client* newClient)
+{
+    client_lst.push_back(newClient);
+}
+
+bool    channel::IsInChannel(const std::string &name);
+{
+    for (int x = 0; x < client_lst.size(); x++)
+    {
+        if (client_lst[x].getName() == name)
+            return true;
+    }
+    return false;
+}
 
 // void channel::removeClient(client* existingClient)
 // {

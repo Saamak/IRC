@@ -8,12 +8,22 @@
 class channel{
     private :
         std::string _name;
-        std::vector<channel*> client_lst;
+        bool isInvitOnly;
+        bool opTopic;
+        std::string key;
+        size_t maxUser;
+        std::vector<client*> client_lst;
+        std::vector<client*> operator_lst
     public :
         channel(std::string name);
         ~channel();
+        void    addClient(client* newClient)
+        bool    IsInChannel(const std::string &name);
+
+
+        //SETTER GETTER
         std::string getName() const;
-        //vecteur  client membre du channel
+
 };
 
 #endif

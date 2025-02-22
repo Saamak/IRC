@@ -18,8 +18,10 @@ class channel;
 
 class Server {
 private:
+    int iterator;
     int _port;
     int _server_fd;
+    bool _exit;
     struct sockaddr_in _server_addr;
     std::vector<struct pollfd> _poll_fds; // va contenir tout les fds.
     std::vector<channel*> channels_lst;
@@ -40,7 +42,12 @@ public:
     int HandleCommunication(int i);
     void addClient(client* newClient);
     void removeClient(client* existingClient);
+    void    setBoolExit(bool tmp);
     client* getNewClient() const;
+    int getSizeClientList() const;
+    client* getClientList(int x) const;
+
+
     void setNewClient(client* client);
 };
 
