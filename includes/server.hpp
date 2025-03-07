@@ -38,12 +38,18 @@ public:
     void stop();
     void integrity(std::string client_data);
     void addChannel(channel* new_channel);
-    void clientConnected(int i);
+    void clientConnected();
     int HandleCommunication(int i);
     void addClient(client* newClient);
     void removeClient(client* existingClient);
     void    setBoolExit(bool tmp);
     client* getNewClient() const;
+    void printChannelsAndClients() const;
+    void sendToClient(int client_fd, const std::string &message);
+    std::vector<channel *>& getChannelsList();
+    std::vector<client*>& getClientList();
+
+    int getIterator();
     int getSizeClientList() const;
     client* getClientList(int x) const;
 

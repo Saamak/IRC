@@ -32,6 +32,15 @@ void client::setMatch(bool passMatch)
     _passMatch = passMatch;
 }
 
+void client::setUsername(std::string userName)
+{
+    _username = userName;
+}
+
+std::string client::getUsername()
+{
+    return (_username);
+}
 
 
 

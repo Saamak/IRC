@@ -65,7 +65,7 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     return tokens;
 }
 
-void    Server::clientConnected(int i)
+void Server::clientConnected()
 {
     int client_socket = accept(_server_fd, NULL, NULL);
     if (client_socket < 0)
@@ -83,18 +83,29 @@ void    Server::clientConnected(int i)
     _poll_fds.push_back(client_pollfd);
 
     std::string client_data;
-    i++;
-       char buffer[1024];
-       int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-       buffer[bytes_read] = '\0';
-       std::string buff(buffer);
-       client_data = buff;
+    int i = _poll_fds.size() - 1;
+    char buffer[1024];
+    int count = 0;
+    while (count < 4)
+    {
+        int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
+        buffer[bytes_read] = '\0';
+        int x = 0;
+        while (buffer[x])
+        {
+            if (buffer[x] == '\n')
+                count++;
+            x++;
+        }
+        std::string buff(buffer);
+        client_data = client_data + buff;
+    }
     std::vector<std::string> tokens = split(client_data, '\n');
     std::string test("\n");
     tokens.push_back(test);
     for (int y = 0; y < 4; y++)
     {
-       std::cout << B_G << tokens[y] << RESET << E;
+       std::cout << B_R << tokens[y] << RESET << E;
        integrity(tokens[y]);
     }
 }
@@ -140,7 +151,7 @@ void Server::start()
         return;
     }
 
-    std::cout << "Server listening on port " << B_Y << _port << RESET << std::endl;
+    // std::cout << "Server listening on port " << B_Y << _port << RESET << std::endl;
 
     struct pollfd server_pollfd;
     server_pollfd.fd = _server_fd;
@@ -165,13 +176,18 @@ void Server::start()
             {
                 if (_poll_fds[i].fd == _server_fd)
                 {
-                    clientConnected(i);
+                    clientConnected();
                 } 
                 else 
                 {
                     i = HandleCommunication(i);
                 }
             }
+        }
+        for(int x = 0; x < getIterator(); x++)
+        {
+            P << client_lst[x]->getNickname() << E;
+            P << client_lst[x]->getUsername() << E;
         }
     }
 }
@@ -218,4 +234,35 @@ client* Server::getClientList(int x) const
 void Server::setNewClient(client* client)
 {
     newClient = client;
+}
+
+std::vector<channel *>& Server::getChannelsList()
+{
+    return channels_lst;
+}
+
+std::vector<client*>& Server::getClientList()
+{
+    return client_lst;
+}
+
+void Server::printChannelsAndClients() const
+{
+    for (size_t i = 0; i < channels_lst.size(); ++i) {
+        std::cout << "Channel: " << channels_lst[i]->getName() << std::endl;
+        std::vector<client*> clients = channels_lst[i]->getClients();
+        for (size_t j = 0; j < clients.size(); ++j) {
+            std::cout << "  Client: " << clients[j]->getNickname() << std::endl;
+        }
+    }
+}
+
+int Server::getIterator()
+{
+    return (iterator);
+}
+
+void Server::sendToClient(int client_fd, const std::string &message) 
+{
+    send(client_fd, message.c_str(), message.size(), 0);
 }

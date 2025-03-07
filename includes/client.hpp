@@ -8,6 +8,7 @@
 class client {
 private:
     std::string _nickname;
+    std::string _username;
     bool _passMatch;
 
 public:
@@ -17,6 +18,8 @@ public:
     void setNickname(std::string nickName);
     bool getMatch();
     void setMatch(bool passMatch);
+    void setUsername(std::string userName);
+    std::string getUsername();
 };
 
 #endif // CLIENT_HPP

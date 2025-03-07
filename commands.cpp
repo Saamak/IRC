@@ -13,8 +13,8 @@ command::~command(){
 
 void command::pass(const std::string &client_data)
 {
-    std::cout << B_Y << "PASS Checking" << RESET << std::endl;
-    std::cout << B_R << client_data << RESET << std::endl;
+    // std::cout << B_Y << "PASS Checking" << RESET << std::endl;
+    // std::cout << B_R << client_data << RESET << std::endl;
 
     std::istringstream iss(client_data);
     std::string command;
@@ -43,7 +43,7 @@ void command::pass(const std::string &client_data)
 }
 
 void command::nick(const std::string &client_data) {
-    std::cout << "NICK" << std::endl;
+    // std::cout << "NICK" << std::endl;
     std::istringstream iss(client_data);
     std::string command;
     std::string nickname;
@@ -56,19 +56,24 @@ void command::nick(const std::string &client_data) {
     client* newClient = _server.getNewClient();
     if (newClient != NULL) {
         newClient->setNickname(nickname); // Définir le nickname pour le client
-        std::cout << "Nickname set to: " << newClient->getNickname() << std::endl;
+        std::cout << "Client Nickname set to: " << newClient->getNickname() << std::endl;
     } else {
         std::cerr << "Error: No client created. Please provide a valid password first." << std::endl;
     }
 }
 
-// void command::user(const std::string &client_data) {
-//     std::cout << "USER" << std::endl;
-// }
+void command::user(const std::string &client_data) 
+{
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string username;
+    iss >> command;
+    iss >> username;
+    client* newClient = _server.getNewClient();
+    newClient->setUsername(username);
+}
 
 void command::join(const std::string &client_data) {
-    std::cout << "JOIN" << std::endl;
-
     std::istringstream iss(client_data);
     std::string command;
     std::string channel_name;
@@ -78,21 +83,27 @@ void command::join(const std::string &client_data) {
     // Extraire le deuxième mot (le channel_name)
     iss >> channel_name;
 
-    for (int x = 0; x < _server.channels_lst.size(); x++)
-    {
-        if (_server.channels_lst[x].getName() == channel_name)
-            if (_server.channels_lst[x].IsInChannel(_server.client_lst[i - 1].getNickname())); // getNickname ne retour pas un const et IsInChannel en prends un.
-                _server.channels_lst.addClient(_server.client_lst[iterator - 1]); //Ajoute le client si channel_name correspond a un chan existant et si le client n'est pas dans ce channel.
-            P << "BRAVO" << E;
+    std::vector<channel*>& Channel_tmp = _server.getChannelsList();
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    bool channelExists = false;
+    for (size_t x = 0; x < Channel_tmp.size(); x++) {
+        if (Channel_tmp[x]->getName() == channel_name) {
+            channelExists = true;
+            if (!Channel_tmp[x]->IsInChannel(Client_tmp[_server.getIterator() - 1]->getNickname())) {
+                Channel_tmp[x]->addClient(Client_tmp[_server.getIterator() - 1]);
+                P << "Client added to existing channel" << E;
+            }
+            break;
+        }
     }
-    else
-    {
-        //CREER LE CHAN, passer le client en operator.
+    if (!channelExists) {
+        channel* new_channel = new channel(channel_name);
+        new_channel->addClient(Client_tmp[_server.getIterator() - 1]);
+        new_channel->addOperator(Client_tmp[_server.getIterator() - 1]);
+        _server.addChannel(new_channel);
+        P << "Channel created and client added"<<B_R<< "(Operator) " <<RESET<< new_channel->getName()<<E;
     }
-
-
-
-    P << "Channel created: " << new_channel->getName() << E;
+    _server.printChannelsAndClients();
 }
 
 // void command::part() {
@@ -101,18 +112,6 @@ void command::join(const std::string &client_data) {
 
 // void command::privmsg() {
 //     std::cout << "PRIVMSG" << std::endl;
-// }
-
-// void command::notice() {
-//     std::cout << "NOTICE" << std::endl;
-// }
-
-// void command::ping() {
-//     std::cout << "PING" << std::endl;
-// }
-
-// void command::pong() {
-//     std::cout << "PONG" << std::endl;
 // }
 
 // void command::quit() {
@@ -135,18 +134,6 @@ void command::join(const std::string &client_data) {
 //     std::cout << "INVITE" << std::endl;
 // }
 
-// void command::who() {
-//     std::cout << "WHO" << std::endl;
-// }
-
-// void command::whois() {
-//     std::cout << "WHOIS" << std::endl;
-// }
-
-// void command::whowas() {
-//     std::cout << "WHOWAS" << std::endl;
-// }
-
 void command::myExit(const std::string &client_data)
 {
     (void)client_data;
@@ -159,13 +146,11 @@ command::command(Server& server) : _server(server)
 {
     _cmds["PASS"] = &command::pass;
     _cmds["NICK"] = &command::nick;
-    // _cmds["USER"] = &command::user;
+    _cmds["USER"] = &command::user;
     _cmds["JOIN"] = &command::join;
     // _cmds["PART"] = &command::part;
     // _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
-    // _cmds["PING"] = &command::ping;
-    // _cmds["PONG"] = &command::pong;
     // _cmds["QUIT"] = &command::quit;
     // _cmds["TOPIC"] = &command::topic;
     // _cmds["MODE"] = &command::mode;
@@ -179,9 +164,9 @@ command::command(Server& server) : _server(server)
 }
 
 void command::exec(const std::string &client_data) {
-    std::stringstream ss(client_data);
+    std::stringstream iss(client_data);
     std::string buff;
-    ss >> buff;
+    iss >> buff;
     std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff);
     if (it != _cmds.end()) {
         (this->*(it->second))(client_data); // Appelle la fonction associée

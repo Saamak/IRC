@@ -22,13 +22,11 @@ public:
     void pass(const std::string &client_data);
     void nick(const std::string &client_data);
     void myExit(const std::string &client_data);
-    // void user();
-    // void join();
+    void user(const std::string &client_data);
+    void join(const std::string &client_data);
     // void part();
     // void privmsg();
     // void notice();
-    // void ping();
-    // void pong();
     // void quit();
     // void topic();
     // void mode();
