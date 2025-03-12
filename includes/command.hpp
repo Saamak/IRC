@@ -27,7 +27,7 @@ public:
     // void part();
     // void privmsg();
     // void notice();
-    // void quit();
+    void quit(const std::string &client_data);
     // void topic();
     // void mode();
     // void kick();

@@ -28,8 +28,9 @@ void Server::integrity(std::string client_data) {
     cmdd.exec(client_data);
 }
 
-bool Server::init()
+bool Server::init(char *pass)
 {
+    _password = pass;
     _exit = false;
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0)
@@ -74,7 +75,7 @@ void Server::clientConnected()
         return ;
     }
     //check USER/NICK
-    std::cout << G"Client connected\n" << RESET << std::endl;
+    std::cout << G"Client connected SAS\n" << RESET << std::endl;
 
     struct pollfd client_pollfd;
     client_pollfd.fd = client_socket;
@@ -82,32 +83,9 @@ void Server::clientConnected()
     client_pollfd.revents = 0;
     _poll_fds.push_back(client_pollfd);
 
-    std::string client_data;
-    int i = _poll_fds.size() - 1;
-    char buffer[1024];
-    int count = 0;
-    while (count < 4)
-    {
-        int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-        buffer[bytes_read] = '\0';
-        int x = 0;
-        while (buffer[x])
-        {
-            if (buffer[x] == '\n')
-                count++;
-            x++;
-        }
-        std::string buff(buffer);
-        client_data = client_data + buff;
-    }
-    std::vector<std::string> tokens = split(client_data, '\n');
-    std::string test("\n");
-    tokens.push_back(test);
-    for (int y = 0; y < 4; y++)
-    {
-       std::cout << B_R << tokens[y] << RESET << E;
-       integrity(tokens[y]);
-    }
+    newClient = new client();
+    addClient(newClient);
+
 }
 
 int Server::HandleCommunication(int i)
@@ -115,30 +93,21 @@ int Server::HandleCommunication(int i)
     // Handle client communication
     char buffer[1024];
     int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-    if (bytes_read <= 0) 
+    if (bytes_read < 0) 
     {
-        // Client disconnected
-        if (bytes_read == 0) {
-            std::cout << "Client disconnected" << std::endl;
-        } else {
-            P << "serv : " << _server_fd << E;
-            P << _poll_fds[i].fd << E;
-            P << bytes_read << E;
-            std::cerr << "Error: read failed" << std::endl;
-        }
-        close(_poll_fds[i].fd);
-        _poll_fds.erase(_poll_fds.begin() + i);
-        return (--i); // Adjust index after erasing
+        std::cout << "Client disconnected" << std::endl;
+        //Gerer la deco du client;
     }
+
     else
     {
-        // Process client data
         buffer[bytes_read] = '\0';
-        std::cout << B_Y "Received: " << RESET << buffer << std::endl;
-        // Echo the data back to the client
         std::string client_data(buffer);
-        integrity(client_data);
-        write(_poll_fds[i].fd, buffer, bytes_read);
+        std::vector<std::string> splitted = split(client_data, '\n');
+        for(size_t x = 0; x < splitted.size(); x++)
+        {
+            integrity(splitted[x]);
+        }
     }
     return (i);
 }
@@ -150,9 +119,6 @@ void Server::start()
         std::cerr << "Error: listen failed" << std::endl;
         return;
     }
-
-    // std::cout << "Server listening on port " << B_Y << _port << RESET << std::endl;
-
     struct pollfd server_pollfd;
     server_pollfd.fd = _server_fd;
     server_pollfd.events = POLLIN;
@@ -171,7 +137,7 @@ void Server::start()
         }
         for (size_t i = 0; i < _poll_fds.size(); ++i)
         {
-            iterator = i; //PAS SURE car size_t to int et autre prblm;
+            iterator = i;
             if (_poll_fds[i].revents & POLLIN)
             {
                 if (_poll_fds[i].fd == _server_fd)
@@ -184,11 +150,8 @@ void Server::start()
                 }
             }
         }
-        for(int x = 0; x < getIterator(); x++)
-        {
-            P << client_lst[x]->getNickname() << E;
-            P << client_lst[x]->getUsername() << E;
-        }
+        P << B_Y "Client_lst size : " << client_lst.size() << RESET << E;
+        P << B_Y "Poll_fd size : " << _poll_fds.size() << RESET << E;
     }
 }
 
@@ -262,7 +225,22 @@ int Server::getIterator()
     return (iterator);
 }
 
+void Server::setIterator(int i)
+{
+    iterator = i;
+}
+
+std::vector<struct pollfd>& Server::getPollFd()
+{
+    return (_poll_fds);
+}
+
 void Server::sendToClient(int client_fd, const std::string &message) 
 {
     send(client_fd, message.c_str(), message.size(), 0);
+}
+
+std::string Server::getPassword()
+{
+    return _password;
 }

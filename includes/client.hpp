@@ -9,16 +9,28 @@ class client {
 private:
     std::string _nickname;
     std::string _username;
-    bool _passMatch;
+    std::string _clientPassword;
+    bool _isRegistered;
+    bool _passCheck;
+    bool _nickCheck;
+    bool _userCheck;
 
 public:
     client();
     ~client();
     std::string getNickname();
     void setNickname(std::string nickName);
-    bool getMatch();
-    void setMatch(bool passMatch);
     void setUsername(std::string userName);
+    bool getRegistered();
+    bool getPassCheck();
+    bool getNickCheck();
+    bool getUserCheck();
+    std::string getClientPassword();
+    void setRegistered(bool check);
+    void setPassCheck(bool check);
+    void setNickCheck(bool check);
+    void setUserCheck(bool check);
+    void setClientPassword(std::string password);
     std::string getUsername();
 };
 

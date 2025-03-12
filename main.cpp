@@ -9,10 +9,6 @@ int check_input(int ac, char **av)
         std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl;
         return 1;
     }
-    if (strcmp(av[2], SECURE_PASSWD) != 0) {
-        std::cerr << "Error: Wrong password" << std::endl;
-        return 1;
-    }
     int port = atoi(av[1]);
     if (port < 1024 || port > 65535) {
         std::cerr << "Error: Port must be between 1024 and 65535" << std::endl;
@@ -28,7 +24,7 @@ int main(int ac, char **av){
         exit(1);
     Server serv(port);
     P << B_G"\n-----WELCOME TO IRC SERVER-----\n" << RESET << E;
-    serv.init();
+    serv.init(av[2]);
     serv.start();
     serv.stop();
 }

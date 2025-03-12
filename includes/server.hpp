@@ -22,6 +22,7 @@ private:
     int _port;
     int _server_fd;
     bool _exit;
+    std::string _password;
     struct sockaddr_in _server_addr;
     std::vector<struct pollfd> _poll_fds; // va contenir tout les fds.
     std::vector<channel*> channels_lst;
@@ -32,8 +33,7 @@ public:
     std::vector<std::string> tokens;
     Server(int port);
     ~Server();
-    int getPort() const { return _port; }
-    bool init();
+    bool init(char *pass);
     void start();
     void stop();
     void integrity(std::string client_data);
@@ -42,19 +42,22 @@ public:
     int HandleCommunication(int i);
     void addClient(client* newClient);
     void removeClient(client* existingClient);
-    void    setBoolExit(bool tmp);
-    client* getNewClient() const;
     void printChannelsAndClients() const;
     void sendToClient(int client_fd, const std::string &message);
+
+    //SETTER GETTER
+    int getPort() const { return _port; }
+    void    setBoolExit(bool tmp);
+    client* getNewClient() const;
     std::vector<channel *>& getChannelsList();
     std::vector<client*>& getClientList();
-
+    std::vector<struct pollfd>& getPollFd(); 
     int getIterator();
+    void setIterator(int i);
     int getSizeClientList() const;
     client* getClientList(int x) const;
-
-
     void setNewClient(client* client);
+    std::string getPassword();
 };
 
 #endif // SERVER_HPP

@@ -11,66 +11,135 @@ command::~command(){
     P <<BOLD<< "COMMAND DESTRUCTEUR" <<RESET<< E;
 }
 
-void command::pass(const std::string &client_data)
+void command::pass(const std::string &client_data) // Pass daniel
 {
-    // std::cout << B_Y << "PASS Checking" << RESET << std::endl;
-    // std::cout << B_R << client_data << RESET << std::endl;
-
     std::istringstream iss(client_data);
     std::string command;
     std::string password;
-
-    // Extraire le premier mot (la commande)
     iss >> command;
-    // Extraire le deuxième mot (le mot de passe)
     iss >> password;
-    if (!password.empty())
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    if (password.empty())
     {
-        if(password != SECURE_PASSWD)
-            P << B_R << "WRONG PASSWORD" <<RESET << E;
-        else
-        {
-            std::cout <<B_G<<"PASSWORD VALIDATED" <<RESET << E;
-            client* newClient = new client(); // Créer un nouvel objet client
-            newClient->setMatch(true);
-            _server.addClient(newClient); // Ajouter le client à la liste des clients du serveur
-            _server.setNewClient(newClient); // Stocker temporairement le client dans le serveur
-            //delete(newClient);
-        }
+        std::string message = "ERR_NEEDMOREPARAMS\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
     }
-    else
-        P << B_R << "Empty password" << RESET << E;
+    if(Client_tmp[_server.getIterator() -1]->getRegistered())
+    {
+        std::string message = "ERR_ALREADYREGISTRED\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        return ;
+    }
+    if (Client_tmp[_server.getIterator() -1]->getRegistered() == false && (Client_tmp[_server.getIterator() -1]->getNickCheck() == true || Client_tmp[_server.getIterator() -1]->getUserCheck() == true))
+    {
+        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
+    }
+    Client_tmp[_server.getIterator() -1]->setPassCheck(true);
+    Client_tmp[_server.getIterator() -1]->setClientPassword(password);
 }
 
 void command::nick(const std::string &client_data) {
-    // std::cout << "NICK" << std::endl;
+
+    std::vector<client*>& Client_tmp = _server.getClientList();
     std::istringstream iss(client_data);
     std::string command;
     std::string nickname;
-
-    // Extraire le premier mot (la commande)
     iss >> command;
-    // Extraire le deuxième mot (le nickname)
     iss >> nickname;
-
-    client* newClient = _server.getNewClient();
-    if (newClient != NULL) {
-        newClient->setNickname(nickname); // Définir le nickname pour le client
-        std::cout << "Client Nickname set to: " << newClient->getNickname() << std::endl;
-    } else {
-        std::cerr << "Error: No client created. Please provide a valid password first." << std::endl;
+    P << nickname << E;
+    if(nickname.empty())
+    {
+        std::string message = "ERR_NEEDMOREPARAMS\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
+    }
+    if(Client_tmp[_server.getIterator() -1]->getRegistered())
+    {
+        //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LE NOUVEAU NICK, DONC LAISSER L'ACTUEl
+        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
+        std::string message = "You are now known as " + nickname + "\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        return ;
+    }
+    if(Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getUserCheck() == false && Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
+    {
+        //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LA CONNECTION
+        Client_tmp[_server.getIterator() -1]->setNickCheck(true);
+        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
+        return ;
+    }
+    if(Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck())
+    {
+        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
     }
 }
 
 void command::user(const std::string &client_data) 
 {
+    std::vector<client*>& Client_tmp = _server.getClientList();
     std::istringstream iss(client_data);
     std::string command;
     std::string username;
     iss >> command;
     iss >> username;
-    client* newClient = _server.getNewClient();
-    newClient->setUsername(username);
+    if (username.empty())
+    {
+        std::string message = "ERR_NEEDMOREPARAMS\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
+    }
+    if(Client_tmp[_server.getIterator() -1]->getRegistered())
+    {
+        std::string message = "ERR_ALREADYREGISTRED\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        return ;
+    }
+    if (Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
+    {
+        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+        exec("QUIT");
+        return ;
+    }
+    if (Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getNickCheck())
+    {
+        Client_tmp[_server.getIterator() -1]->setUserCheck(true);
+        Client_tmp[_server.getIterator() -1]->setUsername(username);
+        if (Client_tmp[_server.getIterator() -1]->getClientPassword() == _server.getPassword())
+        {
+            std::string message = "Client Connected in German Elite V2\n";
+            std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+            send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+            Client_tmp[_server.getIterator() -1]->setRegistered(true);
+        }   
+        else
+        {
+            std::string message = "Wrong Password\nClient Disconnected\n";
+            std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+            send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+            exec("QUIT");
+        }
+        return ;
+    }
 }
 
 void command::join(const std::string &client_data) {
@@ -114,9 +183,18 @@ void command::join(const std::string &client_data) {
 //     std::cout << "PRIVMSG" << std::endl;
 // }
 
-// void command::quit() {
-//     std::cout << "QUIT" << std::endl;
-// }
+void command::quit(const std::string &client_data)
+{
+    (void)client_data;
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::vector<struct pollfd>& Poll_tmp = _server.getPollFd();
+
+    Client_tmp.erase (Client_tmp.begin() + _server.getIterator() - 1);
+    Poll_tmp.erase(Poll_tmp.begin() + _server.getIterator());
+    _server.setIterator(_server.getIterator() - 1);
+
+    std::cout << "QUIT" << std::endl;
+}
 
 // void command::topic() {
 //     std::cout << "TOPIC" << std::endl;
@@ -151,7 +229,7 @@ command::command(Server& server) : _server(server)
     // _cmds["PART"] = &command::part;
     // _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
-    // _cmds["QUIT"] = &command::quit;
+    _cmds["QUIT"] = &command::quit;
     // _cmds["TOPIC"] = &command::topic;
     // _cmds["MODE"] = &command::mode;
     // _cmds["KICK"] = &command::kick;
@@ -168,9 +246,21 @@ void command::exec(const std::string &client_data) {
     std::string buff;
     iss >> buff;
     std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff);
-    if (it != _cmds.end()) {
+    P << buff << E;
+    if (it != _cmds.end()) 
+    {
         (this->*(it->second))(client_data); // Appelle la fonction associée
-    } else {
+    } 
+    else 
+    {
+        std::vector<client*>& Client_tmp = _server.getClientList();
+        if (Client_tmp[_server.getIterator() -1]->getRegistered() == false)
+        {
+            std::string message = "Command not found during connection PASS/NICK/USER\nClient Disconnected\n";
+            std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+            send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
+            exec("QUIT");
+        }
         std::cerr << "Command not found: " << client_data << std::endl;
     }
 }

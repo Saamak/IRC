@@ -3,7 +3,12 @@
 client::client()
 {
     _nickname = "unknown";
-    _passMatch = false;
+    _username = "unknown";
+    _clientPassword = "unknown";
+    _isRegistered = false;
+    _passCheck = false;
+    _nickCheck = false;
+    _userCheck = false;
     P <<BOLD<< "Client constructor" <<RESET<< E;
 }
 
@@ -22,16 +27,6 @@ void client::setNickname(std::string nickName)
     _nickname = nickName;
 }
 
-bool client::getMatch()
-{
-    return (_passMatch);
-}
-
-void client::setMatch(bool passMatch)
-{
-    _passMatch = passMatch;
-}
-
 void client::setUsername(std::string userName)
 {
     _username = userName;
@@ -42,5 +37,44 @@ std::string client::getUsername()
     return (_username);
 }
 
+bool client::getRegistered(){
+    return _isRegistered;
+}
 
+bool client::getPassCheck(){
+    return _passCheck;
+}
 
+bool client::getNickCheck(){
+    return _nickCheck;
+}
+
+bool client::getUserCheck(){
+    return _userCheck;
+}
+
+void client::setRegistered(bool check){
+    _isRegistered = check;
+}
+
+void client::setPassCheck(bool check){
+    _passCheck = check;
+}
+
+void client::setNickCheck(bool check){
+    _nickCheck = check;
+}
+
+void client::setUserCheck(bool check){
+    _userCheck = check;
+}
+
+std::string client::getClientPassword()
+{
+    return _clientPassword;
+}
+
+void    client::setClientPassword(std::string password)
+{
+    _clientPassword = password;
+}
