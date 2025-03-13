@@ -24,12 +24,13 @@ public:
     void myExit(const std::string &client_data);
     void user(const std::string &client_data);
     void join(const std::string &client_data);
+    void cap(const std::string &client_data);
     // void part();
     // void privmsg();
     // void notice();
     void quit(const std::string &client_data);
     // void topic();
-    // void mode();
+    void mode(const std::string &client_data);
     // void kick();
     // void invite();
     // void who();

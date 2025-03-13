@@ -126,7 +126,7 @@ void command::user(const std::string &client_data)
         Client_tmp[_server.getIterator() -1]->setUsername(username);
         if (Client_tmp[_server.getIterator() -1]->getClientPassword() == _server.getPassword())
         {
-            std::string message = "Client Connected in German Elite V2\n";
+            std::string message = "Client Connected in\n" + _server.getServerName();
             std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
             send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
             Client_tmp[_server.getIterator() -1]->setRegistered(true);
@@ -147,6 +147,7 @@ void command::join(const std::string &client_data) {
     std::string command;
     std::string channel_name;
 
+    //GERER LES MULTIPLES INVITATIONS , 1 SEULE INVITATION PAR PERSONNE pour eviter les soucis, + Attention aux limites max dans le channel, quand le channel depasse la nouvelle limite installee 
     // Extraire le premier mot (la commande)
     iss >> command;
     // Extraire le deuxième mot (le channel_name)
@@ -172,12 +173,42 @@ void command::join(const std::string &client_data) {
         _server.addChannel(new_channel);
         P << "Channel created and client added"<<B_R<< "(Operator) " <<RESET<< new_channel->getName()<<E;
     }
+
+    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+
+    std::string topic = "Welcome to the channel!";
+    std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
+    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+
+    // Send JOIN message
+    std::string join_message = ":" + nickname + " JOIN " + channel_name + "\r\n";
+    send(pollfd_tmp[_server.getIterator()].fd, join_message.c_str(), join_message.size(), 0);
+
+    // Send RPL_NAMREPLY (353) message
+/*     std::string names_list = "= " + channel_name + " :" + nickname + "\r\n";
+    std::string names_message = ":" + _server.getServerName() + " 353 " + nickname + " " + names_list;
+    send(pollfd_tmp[_server.getIterator()].fd, names_message.c_str(), names_message.size(), 0); */
+
     _server.printChannelsAndClients();
 }
 
-// void command::part() {
-//     std::cout << "PART" << std::endl;
-// }
+void command::mode(const std::string &client_data) {
+    (void)client_data;
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string channel_name;
+    iss >> command;
+    iss >> channel_name;
+
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    std::string names_list = "= " + channel_name + " :" + nickname + "\r\n";
+    std::string names_message = ":" + _server.getServerName() + " 353 " + nickname + " " + names_list;
+    send(pollfd_tmp[_server.getIterator()].fd, names_message.c_str(), names_message.size(), 0);
+    std::cout << "MODEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" << std::endl;
+}
 
 // void command::privmsg() {
 //     std::cout << "PRIVMSG" << std::endl;
@@ -200,9 +231,6 @@ void command::quit(const std::string &client_data)
 //     std::cout << "TOPIC" << std::endl;
 // }
 
-// void command::mode() {
-//     std::cout << "MODE" << std::endl;
-// }
 
 // void command::kick() {
 //     std::cout << "KICK" << std::endl;
@@ -220,18 +248,25 @@ void command::myExit(const std::string &client_data)
     _server.setBoolExit(true);
 }
 
+void    command::cap(const std::string &client_data)
+{
+    (void)client_data;
+    return ;   
+}
+
 command::command(Server& server) : _server(server)
 {
     _cmds["PASS"] = &command::pass;
     _cmds["NICK"] = &command::nick;
     _cmds["USER"] = &command::user;
     _cmds["JOIN"] = &command::join;
+    _cmds["CAP"] = &command::cap;
     // _cmds["PART"] = &command::part;
     // _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
     _cmds["QUIT"] = &command::quit;
     // _cmds["TOPIC"] = &command::topic;
-    // _cmds["MODE"] = &command::mode;
+    _cmds["MODE"] = &command::mode;
     // _cmds["KICK"] = &command::kick;
     // _cmds["INVITE"] = &command::invite;
     // _cmds["WHO"] = &command::who;
@@ -246,7 +281,6 @@ void command::exec(const std::string &client_data) {
     std::string buff;
     iss >> buff;
     std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff);
-    P << buff << E;
     if (it != _cmds.end()) 
     {
         (this->*(it->second))(client_data); // Appelle la fonction associée
@@ -261,6 +295,8 @@ void command::exec(const std::string &client_data) {
             send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
             exec("QUIT");
         }
-        std::cerr << "Command not found: " << client_data << std::endl;
+        std::string message = "Command not found\n";
+        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
     }
 }

@@ -10,6 +10,7 @@ private:
     std::string _nickname;
     std::string _username;
     std::string _clientPassword;
+    std::string _buffer_client;
     bool _isRegistered;
     bool _passCheck;
     bool _nickCheck;
@@ -19,6 +20,9 @@ public:
     client();
     ~client();
     std::string getNickname();
+    void setBufferClient(std::string buffer_client);
+    std::string getBufferClient(void);
+    void emptyBufferClient();
     void setNickname(std::string nickName);
     void setUsername(std::string userName);
     bool getRegistered();

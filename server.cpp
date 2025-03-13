@@ -30,6 +30,7 @@ void Server::integrity(std::string client_data) {
 
 bool Server::init(char *pass)
 {
+    _server_name = "German Elite V2";
     _password = pass;
     _exit = false;
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -93,21 +94,41 @@ int Server::HandleCommunication(int i)
     // Handle client communication
     char buffer[1024];
     int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-    if (bytes_read < 0) 
+    buffer[bytes_read] = '\0';
+    std::string client_test(buffer);
+    std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
+    if (buffer[0] == '\0')
     {
-        std::cout << "Client disconnected" << std::endl;
-        //Gerer la deco du client;
+        integrity("QUIT");
+        return (i);
+    }
+    if (buffer_client_tmp.empty() == false)
+    {
+        client_test = buffer_client_tmp + client_test;
     }
 
+    if (client_test.find('\n') == (size_t)-1)
+    {
+        client_lst[iterator - 1]->setBufferClient(client_test);
+        return (i);
+    }
+    // IF \r\n detecter , lancer la commande, si /r/n non detecter , ne pas lancer la commande, stocker dans un buffer jusqu'a ce que la commande finale soit envoyee.
+    //Attention, dans la pratique peut etre faire une comparaison entre buffer + chaine recu , car le terminal renvoie a chaque fois l'integralitie de la commande.
+    // Voir exemple sujet, renvoie com, pui com man, puis com man, puis com man \r\n.
+    if (bytes_read < 0) 
+    {
+        std::string message =  "READ ERROR in client fd\nClient Disconnected\n";
+        send(_poll_fds[iterator - 1].fd, message.c_str(), message.size(), 0);
+        integrity("QUIT");
+    }
     else
     {
-        buffer[bytes_read] = '\0';
-        std::string client_data(buffer);
-        std::vector<std::string> splitted = split(client_data, '\n');
+        std::vector<std::string> splitted = split(client_test, '\n');
         for(size_t x = 0; x < splitted.size(); x++)
         {
             integrity(splitted[x]);
         }
+        client_lst[iterator - 1]->emptyBufferClient();
     }
     return (i);
 }
@@ -243,4 +264,8 @@ void Server::sendToClient(int client_fd, const std::string &message)
 std::string Server::getPassword()
 {
     return _password;
+}
+
+std::string Server::getServerName(){
+    return _server_name;
 }

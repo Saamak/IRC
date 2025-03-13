@@ -18,6 +18,7 @@ class channel;
 
 class Server {
 private:
+    std::string _server_name;
     int iterator;
     int _port;
     int _server_fd;
@@ -58,6 +59,7 @@ public:
     client* getClientList(int x) const;
     void setNewClient(client* client);
     std::string getPassword();
+    std::string getServerName();
 };
 
 #endif // SERVER_HPP

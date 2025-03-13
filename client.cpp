@@ -17,6 +17,21 @@ client::~client()
     P << "Client destructor" << E;
 }
 
+std::string client::getBufferClient()
+{
+    return (_buffer_client);
+}
+
+void client::setBufferClient(std::string buffer_client)
+{
+    _buffer_client = buffer_client;
+}
+
+void client::emptyBufferClient()
+{
+    _buffer_client.clear();
+}
+
 std::string client::getNickname()
 {
     return (_nickname);
