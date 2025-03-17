@@ -148,9 +148,7 @@ void command::join(const std::string &client_data) {
     std::string channel_name;
 
     //GERER LES MULTIPLES INVITATIONS , 1 SEULE INVITATION PAR PERSONNE pour eviter les soucis, + Attention aux limites max dans le channel, quand le channel depasse la nouvelle limite installee 
-    // Extraire le premier mot (la commande)
     iss >> command;
-    // Extraire le deuxième mot (le channel_name)
     iss >> channel_name;
 
     std::vector<channel*>& Channel_tmp = _server.getChannelsList();
@@ -177,6 +175,7 @@ void command::join(const std::string &client_data) {
     std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
 
+    // Send JOIN message
     std::string topic = "Welcome to the channel!";
     std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
     send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
@@ -227,9 +226,64 @@ void command::quit(const std::string &client_data)
     std::cout << "QUIT" << std::endl;
 }
 
-// void command::topic() {
-//     std::cout << "TOPIC" << std::endl;
-// }
+void command::topic(const std::string &client_data)
+{
+    P << "TOPIC" << E;
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string channel_name;
+    std::string topic_name;
+    iss >> command;
+    iss >> channel_name;
+    iss >> topic_name;
+
+    std::vector<channel*>& Channel_tmp = _server.getChannelsList();
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    std::string username = Client_tmp[_server.getIterator() - 1]->getUsername();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    size_t x = 0;
+    if (topic_name.empty())
+    {
+        // P << Channel_tmp[0]->getName() << E;
+        // P << channel_name << E;
+        for (x = 0; x < Channel_tmp.size(); x++)
+        {
+            if (Channel_tmp[x]->getName() == channel_name)
+            {
+                if (Channel_tmp[x]->getTopic().empty())
+                {
+                    std::string topic_message = ":" + _server.getServerName() + " 331 " + nickname + " " + channel_name + " :No topic is set.\r\n";
+                    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+                    return ;
+                }
+                else
+                {
+                    std::string topic = Channel_tmp[x]->getTopic();
+                    std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
+                    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+                    return ;
+                }
+        }
+            std::string topic_message = ":" + _server.getServerName() + " 403 " + nickname + " :No Such channel\r\n";
+            send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+        }
+    }
+    if (!topic_name.empty())
+    {
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        Channel_tmp[x]->setTopic(topic_name);
+        // P << B_Y << "channel topic changed to : " <<B_R<< Channel_tmp[x]->getTopic() << RESET<< E;
+        // TOPIC #test :another topic  
+        std::string topic_change = ":" + nickname + "!" + username + "@" + _server.getServerName() + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
+        send(pollfd_tmp[_server.getIterator()].fd, topic_change.c_str(), topic_change.size(), 0);
+    }
+}
 
 
 // void command::kick() {
@@ -265,11 +319,11 @@ command::command(Server& server) : _server(server)
     // _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
     _cmds["QUIT"] = &command::quit;
-    // _cmds["TOPIC"] = &command::topic;
+    _cmds["TOPIC"] = &command::topic;
     _cmds["MODE"] = &command::mode;
     // _cmds["KICK"] = &command::kick;
     // _cmds["INVITE"] = &command::invite;
-    // _cmds["WHO"] = &command::who;
+    // _cmds["WHO"] = &command::who;s
     // _cmds["WHOIS"] = &command::whois;
     // _cmds["WHOWAS"] = &command::whowas;
 

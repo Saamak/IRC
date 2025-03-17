@@ -3,12 +3,14 @@
 
 #include "server.hpp"
 #include "client.hpp"
+#include <limits>
 #include "colors.h"
 
 
 class channel{
     private :
         std::string _name;
+        std::string _topic;
         bool isInvitOnly;
         bool opTopic;
         std::string key;
@@ -26,6 +28,8 @@ class channel{
 
         //SETTER GETTER
         std::string getName() const;
+        std::string getTopic() const;
+        void setTopic(const std::string topic_name);
 
 };
 

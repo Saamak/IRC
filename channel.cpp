@@ -3,13 +3,15 @@
 channel::channel(std::string name): _name(name)
 {
     P << "channel constructor" << E;
+    isInvitOnly = false;
+    opTopic = false;
+    maxUser = std::numeric_limits<size_t>::max();
 }
 
 channel::~channel()
 {
     P << "destructor channel" << E;
 }
-
 std::string channel::getName() const
 {
     return _name;
@@ -38,6 +40,18 @@ void channel::addOperator(client * newOperator)
 std::vector<client*> channel::getClients() const {
     return client_lst;
 }
+
+
+std::string channel::getTopic() const
+{
+    return (_topic);
+}
+
+void channel::setTopic(const std::string topic_name)
+{
+    _topic = topic_name;
+}
+
 
 // void channel::removeClient(client* existingClient)
 // {

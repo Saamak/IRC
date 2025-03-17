@@ -29,7 +29,7 @@ public:
     // void privmsg();
     // void notice();
     void quit(const std::string &client_data);
-    // void topic();
+    void topic(const std::string &client_data);
     void mode(const std::string &client_data);
     // void kick();
     // void invite();
