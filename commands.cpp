@@ -216,17 +216,27 @@ void command::mode(const std::string &client_data) {
     _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);
 }
 
-void command::quit(const std::string &client_data)
-{
+void command::quit(const std::string &client_data) {
     (void)client_data;
     std::vector<client*>& Client_tmp = _server.getClientList();
-    std::vector<struct pollfd>& Poll_tmp = _server.getPollFd();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    size_t iterator = _server.getIterator();
 
-    Client_tmp.erase (Client_tmp.begin() + _server.getIterator() - 1);
-    Poll_tmp.erase(Poll_tmp.begin() + _server.getIterator());
-    _server.setIterator(_server.getIterator() - 1);
+    if (iterator < 1 || iterator > Client_tmp.size()) {
+        P << "Invalid iterator: " << iterator << E;
+        return;
+    }
 
-    std::cout << "QUIT" << std::endl;
+    // Supprimer le client de manière sécurisée
+    client* client_to_remove = Client_tmp[iterator - 1];
+    if (client_to_remove) {
+        P << "Removing client: " << client_to_remove->getNickname() << E;
+        delete client_to_remove;
+        Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
+        pollfd_tmp.erase(pollfd_tmp.begin() + (iterator - 1));
+    } else {
+        P << "Client pointer is null, skipping removal" << E;
+    }
 }
 
 void command::topic(const std::string &client_data) {
