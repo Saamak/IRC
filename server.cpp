@@ -269,3 +269,44 @@ std::string Server::getPassword()
 std::string Server::getServerName(){
     return _server_name;
 }
+
+void Server::sendIrcMessage(const std::string& server_name, const std::string& code, const std::string& nickname, const std::string& channel_name, const std::string& additional_info, int fd) {
+    std::string message;
+
+    // Gérer les différents codes IRC
+    if (code == "ERR_NEEDMOREPARAMS") {
+        message = ":" + server_name + " 461 " + nickname + " " + channel_name + " :Not enough parameters\r\n";
+    } else if (code == "ERR_BANNEDFROMCHAN") {
+        message = ":" + server_name + " 474 " + nickname + " " + channel_name + " :Cannot join channel (+b)\r\n";
+    } else if (code == "ERR_INVITEONLYCHAN") {
+        message = ":" + server_name + " 473 " + nickname + " " + channel_name + " :Cannot join channel (+i)\r\n";
+    } else if (code == "ERR_BADCHANNELKEY") {
+        message = ":" + server_name + " 475 " + nickname + " " + channel_name + " :Cannot join channel (+k)\r\n";
+    } else if (code == "ERR_CHANNELISFULL") {
+        message = ":" + server_name + " 471 " + nickname + " " + channel_name + " :Cannot join channel (+l)\r\n";
+    } else if (code == "ERR_BADCHANMASK") {
+        message = ":" + server_name + " 476 " + nickname + " " + channel_name + " :Bad channel mask\r\n";
+    } else if (code == "ERR_NOSUCHCHANNEL") {
+        message = ":" + server_name + " 403 " + nickname + " " + channel_name + " :No such channel\r\n";
+    } else if (code == "ERR_TOOMANYCHANNELS") {
+        message = ":" + server_name + " 405 " + nickname + " " + channel_name + " :You have joined too many channels\r\n";
+    } else if (code == "RPL_TOPIC") {
+        message = ":" + server_name + " 332 " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
+    } else if (code == "RPL_NAMREPLY") {
+        message = ":" + server_name + " 353 " + nickname + " = " + channel_name + " :" + additional_info + "\r\n";
+    } else if (code == "RPL_ENDOFNAMES") {
+        message = ":" + server_name + " 366 " + nickname + " " + channel_name + " :End of /NAMES list\r\n";
+    } else if (code == "ERR_NOTONCHANNEL") {
+        message = ":" + server_name + " 442 " + nickname + " " + channel_name + " :You're not on that channel\r\n";
+    } else if (code == "ERR_USERNOTINCHANNEL") {
+        message = ":" + server_name + " 441 " + nickname + " " + channel_name + " :They aren't on that channel\r\n";
+    } else if (code == "ERR_UNKNOWNCOMMAND") {
+        message = ":" + server_name + " 421 " + nickname + " " + channel_name + " :Unknown command\r\n";
+    } else {
+        // Code inconnu ou générique
+        message = ":" + server_name + " " + code + " " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
+    }
+
+    // Envoyer le message
+    send(fd, message.c_str(), message.size(), 0);
+}

@@ -60,6 +60,8 @@ public:
     void setNewClient(client* client);
     std::string getPassword();
     std::string getServerName();
+
+    void sendIrcMessage(const std::string& server_name, const std::string& code, const std::string& nickname, const std::string& channel_name, const std::string& additional_info, int fd);
 };
 
 #endif // SERVER_HPP
