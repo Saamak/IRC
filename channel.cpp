@@ -56,9 +56,64 @@ void channel::setTopic(const std::string topic_name)
 
 void    channel::setChannelFlag(std::string flag)
 {
-    if(flag.size() > 2 || (flag[0] != '-' || flag[0] != '+'))
+    P << flag.size() << E;
+    if(flag.size() > 2)
     {
         P << B_R <<"erreur flag DE MERDE" << E;
         return ;
     }
+    if (flag[0] != '-' || flag[0] != '+')
+    {
+        P << B_R <<"+ - ERROR" << E;
+        return ;
+    }
+
+    switch (flag[1]) 
+    {
+        case 'i':
+            isInvitOnly = !isInvitOnly;
+            P << B_Y << "InvitObly set to : " << getOpTopic() << E;
+            break;
+        case 't':
+            opTopic = !opTopic;
+            P << B_Y << "op topic set to : " << getOpTopic() << E;
+            break;
+        case 'k':
+            isPasswd = !isPasswd;
+            P << B_Y << "KeyMode set to : " << getOpTopic() << E;
+            break;
+        case 'o':
+            P<< "flag" << B_Y << " o " <<RESET << "non pris en charge pour le moment" << E;
+            break;
+        case 'l':
+            P << "flag" << B_Y << " l " <<RESET << "non pris en charge pour le moment" << E;
+            break;
+        default:
+            P << B_R << "Flag inconnu" << E;
+            break;
+    }
+}
+
+bool channel::getIsInvitOnly() const {
+    return isInvitOnly;
+}
+
+void channel::setIsInvitOnly(bool value) {
+    isInvitOnly = value;
+}
+
+bool channel::getOpTopic() const {
+    return opTopic;
+}
+
+void channel::setOpTopic(bool value) {
+    opTopic = value;
+}
+
+bool channel::getIsPasswd() const {
+    return isPasswd;
+}
+
+void channel::setIsPasswd(bool value) {
+    isPasswd = value;
 }

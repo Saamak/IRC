@@ -228,7 +228,7 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
     }
     if (channel_name[0] != '#')
     {
-        sendIt(ERR_NOSUCHNICK(nickname, flag), fd);
+        sendIt(ERR_NOSUCHNICK(nickname, channel_name), fd);
         //:Armida.german-elite.net 401 pierre -t :No such nick/channel
         return ;
     }
@@ -236,8 +236,12 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
         sendIt(RPL_CHANNELMODEIS(nickname, channel_name, flag), fd); //affiche modes
     else
     {
-        flagIntegrity(flag);
-        _channel.setChannelFlag(std::string flag);
+        std::vector<channel*>& Channel_tmp = _server.getChannelsList();
+        for (size_t x = 0; x < Channel_tmp.size(); x++)
+        {
+            if (Channel_tmp[x]->getName() == channel_name) 
+                Channel_tmp[x]->setChannelFlag(flag);
+        }
     }
     //:Armida.german-elite.net 324 pierre #io +nt
     //@time=2025-03-21T12:15:57.951Z :pierre!~pierrre@GE-9042C255.unyc.it MODE #rr +i // changement de mode

@@ -32,6 +32,12 @@ class channel{
         std::string getName() const;
         std::string getTopic() const;
         void setTopic(const std::string topic_name);
+        bool getIsInvitOnly() const;
+        bool getOpTopic() const;
+        bool getIsPasswd() const;
+        void setIsInvitOnly(bool value);
+        void setOpTopic(bool value);
+        void setIsPasswd(bool value);
 
 };
 
