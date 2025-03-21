@@ -2,7 +2,7 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-# define RPL_WELCOME(input)							"001 " + input + " :Welcome to the fc depression Network " + input + "!"
+# define RPL_WELCOME(input)							"001 " + input + " :Welcome to German Elite " + B_G + input + RESET + "!"
 # define RPL_YOURHOST(input, serv, ver)				"002 " + input + " :Your host is " + serv + ", running version " + ver
 # define RPL_CREATED(input, date)					"003 " + input + " :This server was created " + date
 # define RPL_LISTSTART(input)						"321 " + input + " Channel :Users  Name"

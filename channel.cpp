@@ -62,31 +62,30 @@ void    channel::setChannelFlag(std::string flag)
         P << B_R <<"erreur flag DE MERDE" << E;
         return ;
     }
-    if (flag[0] != '-' || flag[0] != '+')
+    if (flag[0] != '-' && flag[0] != '+')
     {
         P << B_R <<"+ - ERROR" << E;
         return ;
     }
-
     switch (flag[1]) 
     {
         case 'i':
             isInvitOnly = !isInvitOnly;
-            P << B_Y << "InvitObly set to : " << getOpTopic() << E;
+            P << B_G << "InvitObly set to : " << getOpTopic() << E;
             break;
         case 't':
             opTopic = !opTopic;
-            P << B_Y << "op topic set to : " << getOpTopic() << E;
+            P << B_G << "op topic set to : " << getOpTopic() << E;
             break;
         case 'k':
             isPasswd = !isPasswd;
-            P << B_Y << "KeyMode set to : " << getOpTopic() << E;
+            P << B_G << "KeyMode set to : " << getOpTopic() << E;
             break;
         case 'o':
-            P<< "flag" << B_Y << " o " <<RESET << "non pris en charge pour le moment" << E;
+            P<< "flag" << BOLD << " o " <<RESET << "non pris en charge pour le moment" << E;
             break;
         case 'l':
-            P << "flag" << B_Y << " l " <<RESET << "non pris en charge pour le moment" << E;
+            P << "flag" << BOLD << " l " <<RESET << "non pris en charge pour le moment" << E;
             break;
         default:
             P << B_R << "Flag inconnu" << E;
