@@ -175,19 +175,32 @@ void command::join(const std::string &client_data) {
         P << "Channel created and client added" << B_R << "(Operator) " << RESET << new_channel->getName() << E;
     }
 
+    (void)fd;
     // Send JOIN message
-    _server.sendIrcMessage(_server.getServerName(), "JOIN", nickname, channel_name, "", fd);
+    std::string topic = "Welcome to the channel!";
+    sendIt(RPL_TOPIC(nickname, channel_name, topic), pollfd_tmp[_server.getIterator()].fd );
+    // std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
+    // send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+
+    // Send JOIN message
+    std::string join_message = ":" + nickname + " JOIN " + channel_name + "\r\n";
+    send(pollfd_tmp[_server.getIterator()].fd, join_message.c_str(), join_message.size(), 0);
+
+
+
+    // Send JOIN message
+    // _server.sendIrcMessage(_server.getServerName(), "JOIN", nickname, channel_name, "", fd);
 
     // Send RPL_TOPIC (332) message
-    std::string topic = "Welcome to the channel!";
-    _server.sendIrcMessage(_server.getServerName(), "RPL_TOPIC", nickname, channel_name, topic, fd);
+    // std::string topic = "Welcome to the channel!";
+    // _server.sendIrcMessage(_server.getServerName(), "RPL_TOPIC", nickname, channel_name, topic, fd);
 
     // Send RPL_NAMREPLY (353) message
-    std::string names_list = nickname; // Add other users in the channel if needed
-    _server.sendIrcMessage(_server.getServerName(), "RPL_NAMREPLY", nickname, channel_name, names_list, fd);
+   // std::string names_list = nickname; // Add other users in the channel if needed
+   // _server.sendIrcMessage(_server.getServerName(), "RPL_NAMREPLY", nickname, channel_name, names_list, fd);
 
     // Send RPL_ENDOFNAMES (366) message
-    _server.sendIrcMessage(_server.getServerName(), "RPL_ENDOFNAMES", nickname, channel_name, "", fd);
+    //_server.sendIrcMessage(_server.getServerName(), "RPL_ENDOFNAMES", nickname, channel_name, "", fd);
 
     _server.printChannelsAndClients();
 }
@@ -239,6 +252,18 @@ void command::quit(const std::string &client_data) {
     }
 }
 
+
+size_t command::getChanIterator(std::string channelname)
+{
+    std::vector<channel*>& Channel_tmp = _server.getChannelsList();
+    for (size_t x = 0; x < Channel_tmp.size(); x++)
+    {
+        if (Channel_tmp[x]->getName() == channelname) 
+            return x;
+    }
+    return static_cast<size_t>(-1);
+}
+
 void command::topic(const std::string &client_data) {
     std::istringstream iss(client_data);
     std::string command;
@@ -247,7 +272,8 @@ void command::topic(const std::string &client_data) {
 
     iss >> command;
     iss >> channel_name;
-    std::getline(iss, topic_name);
+    iss >> topic_name;
+        
 
     if (!topic_name.empty() && topic_name[0] == ' ') {
         topic_name.erase(0, 1);
@@ -258,6 +284,56 @@ void command::topic(const std::string &client_data) {
     std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
+    size_t x = getChanIterator(channel_name);
+
+    if (topic_name.empty())
+    {
+        if(channel_name.size() > 1  && channel_name[0] == '#')
+        {
+            for (size_t x = 0; x < Channel_tmp.size(); x++)
+            {
+                if (Channel_tmp[x]->getName() == channel_name) 
+                {
+                    if (Channel_tmp[x]->getTopic().empty()){
+                        _server.sendIrcMessage(_server.getServerName(), "ERR_NOTOPIC", nickname, channel_name, "No topic is set.", fd);
+                        return ;
+                    }
+                    else{
+                        _server.sendIrcMessage(_server.getServerName(), "RPL_TOPIC", nickname, channel_name, Channel_tmp[x]->getTopic(), fd);
+                        return;
+                    }
+                }
+            }
+            _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);
+            return;
+        }
+        else
+        {
+            for (size_t x = 0; x < Channel_tmp.size(); x++)
+            {
+                if (Channel_tmp[x]->getName() == channel_name) //verifier que /topic est execute dans un channel existant et dont je fais partit et dont je suis OP
+                {
+                    if (Channel_tmp[x]->IsInChannel(nickname))
+                    {
+                        //AJOUTER LA CONDITION SI CLIENT EST DANS LE CHAN ET OP, QUE LES DROITS TOPIC SONT OPERATOR OU NON
+                        Channel_tmp[x]->setTopic(channel_name);
+                        _server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
+                        P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E; return;
+                    }
+                    else
+                    {
+                        //:Armida.german-elite.net 442 HELL #tata :You're not on that channel // ERR_NOTONCHANNEL
+                        _server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
+                    }
+                }
+            }
+            _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);return;
+        }
+    }
+    if(channel_name.size() > 0 && channel_name[0] == '#' && topic_name.size() > 0)
+    {
+        Channel_tmp[x]->setTopic(topic_name);
+    }
 
     for (size_t x = 0; x < Channel_tmp.size(); x++) {
         if (Channel_tmp[x]->getName() == channel_name) {
@@ -338,4 +414,13 @@ void command::exec(const std::string &client_data) {
         std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
         send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
     }
+}
+
+void command::sendIt(std::string def, int fdClient)
+{
+    def += "\r\n";
+    def.insert(0, ":" + _server.getServerName() + " ");
+
+    send(fdClient, def.c_str(), def.size(), 0);
+
 }

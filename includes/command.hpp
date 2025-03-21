@@ -25,6 +25,7 @@ public:
     void user(const std::string &client_data);
     void join(const std::string &client_data);
     void cap(const std::string &client_data);
+    size_t getChanIterator(std::string channelname);
     // void part();
     // void privmsg();
     // void notice();
@@ -36,6 +37,8 @@ public:
     // void who();
     // void whois();
     // void whowas();
+
+    void sendIt(std::string def, int fdClient);
 };
 
 #endif // COMMAND_HPP

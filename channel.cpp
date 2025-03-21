@@ -4,6 +4,7 @@ channel::channel(std::string name): _name(name)
 {
     P << "channel constructor" << E;
     isInvitOnly = false;
+    isPasswd = false;
     opTopic = false;
     maxUser = std::numeric_limits<size_t>::max();
 }

@@ -293,7 +293,7 @@ void Server::sendIrcMessage(const std::string& server_name, const std::string& c
     } else if (code == "RPL_TOPIC") {
         message = ":" + server_name + " 332 " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
     } else if (code == "RPL_NAMREPLY") {
-        message = ":" + server_name + " 353 " + nickname + " = " + channel_name + " :" + additional_info + "\r\n";
+        message = ":" + server_name + " 353 " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
     } else if (code == "RPL_ENDOFNAMES") {
         message = ":" + server_name + " 366 " + nickname + " " + channel_name + " :End of /NAMES list\r\n";
     } else if (code == "ERR_NOTONCHANNEL") {
@@ -304,7 +304,7 @@ void Server::sendIrcMessage(const std::string& server_name, const std::string& c
         message = ":" + server_name + " 421 " + nickname + " " + channel_name + " :Unknown command\r\n";
     } else {
         // Code inconnu ou générique
-        message = ":" + server_name + " " + code + " " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
+        message = ":" + server_name + " : " + code + " " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
     }
 
     // Envoyer le message

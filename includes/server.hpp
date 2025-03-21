@@ -13,6 +13,7 @@
 #include <poll.h>
 #include "channel.hpp"
 #include "client.hpp"
+#include "response.hpp"
 
 class channel;
 

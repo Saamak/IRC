@@ -13,6 +13,7 @@ class channel{
         std::string _topic;
         bool isInvitOnly;
         bool opTopic;
+        bool isPasswd;
         std::string key;
         size_t maxUser;
         std::vector<client*> client_lst;
