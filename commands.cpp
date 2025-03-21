@@ -178,7 +178,7 @@ void command::join(const std::string &client_data) {
     (void)fd;
     // Send JOIN message
     std::string topic = "Welcome to the channel!";
-    sendIt(RPL_TOPIC(nickname, channel_name, topic), pollfd_tmp[_server.getIterator()].fd );
+    sendIt(RPL_TOPIC(nickname, channel_name, topic), fd);
     // std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
     // send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
 
@@ -205,28 +205,42 @@ void command::join(const std::string &client_data) {
     _server.printChannelsAndClients();
 }
 
-void command::mode(const std::string &client_data) {
+void command::mode(const std::string &client_data) { //MODE #cc +i
     std::istringstream iss(client_data);
     std::string command;
     std::string channel_name;
+    std::string flag;
 
     iss >> command;
     iss >> channel_name;
+    iss >> flag;
 
-    std::vector<channel*>& Channel_tmp = _server.getChannelsList();
+    // std::vector<channel*>& Channel_tmp = _server.getChannelsList();
     std::vector<client*>& Client_tmp = _server.getClientList();
     std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
 
-    for (size_t x = 0; x < Channel_tmp.size(); x++) {
-        if (Channel_tmp[x]->getName() == channel_name) {
-            _server.sendIrcMessage(_server.getServerName(), "RPL_CHANNELMODEIS", nickname, channel_name, "+nt", fd);
-            return;
-        }
+    if (channel_name.empty() && flag.empty())
+    {
+        sendIt(ERR_NEEDMOREPARAMS(nickname, command), fd);
+        return ;
     }
-
-    _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);
+    if (channel_name[0] != '#')
+    {
+        sendIt(ERR_NOSUCHNICK(nickname, flag), fd);
+        //:Armida.german-elite.net 401 pierre -t :No such nick/channel
+        return ;
+    }
+    if(flag.empty())
+        sendIt(RPL_CHANNELMODEIS(nickname, channel_name, flag), fd); //affiche modes
+    else
+    {
+        flagIntegrity(flag);
+        _channel.setChannelFlag(std::string flag);
+    }
+    //:Armida.german-elite.net 324 pierre #io +nt
+    //@time=2025-03-21T12:15:57.951Z :pierre!~pierrre@GE-9042C255.unyc.it MODE #rr +i // changement de mode
 }
 
 void command::quit(const std::string &client_data) {

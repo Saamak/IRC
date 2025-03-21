@@ -54,7 +54,11 @@ void channel::setTopic(const std::string topic_name)
 }
 
 
-// void channel::removeClient(client* existingClient)
-// {
-//     _clients.erase(std::remove(_clients.begin(), _clients.end(), existingClient), _clients.end());
-// }
+void    channel::setChannelFlag(std::string flag)
+{
+    if(flag.size() > 2 || (flag[0] != '-' || flag[0] != '+'))
+    {
+        P << B_R <<"erreur flag DE MERDE" << E;
+        return ;
+    }
+}

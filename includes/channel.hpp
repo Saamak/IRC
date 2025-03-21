@@ -25,6 +25,7 @@ class channel{
         bool    IsInChannel(const std::string &name);
         void    addOperator(client * newOperator);
         std::vector<client*> getClients() const;
+        void    setChannelFlag(std::string flag);
 
 
         //SETTER GETTER
