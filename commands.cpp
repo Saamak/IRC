@@ -249,7 +249,7 @@ void command::quit(const std::string &client_data) {
     size_t iterator = _server.getIterator();
 
     if (iterator < 1 || iterator > Client_tmp.size()) {
-        P << "Invalid iterator: " << iterator << E;
+        P << " invalid iterator: " << iterator << E;
         return;
     }
 
@@ -259,7 +259,7 @@ void command::quit(const std::string &client_data) {
         P << "Removing client: " << client_to_remove->getNickname() << E;
         delete client_to_remove;
         Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
-        pollfd_tmp.erase(pollfd_tmp.begin() + (iterator - 1));
+        pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
     } else {
         P << "Client pointer is null, skipping removal" << E;
     }
@@ -422,6 +422,7 @@ void command::exec(const std::string &client_data) {
             std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
             send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
             exec("QUIT");
+            return ;
         }
         std::string message = "Command not found\n";
         std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
