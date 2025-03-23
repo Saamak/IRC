@@ -21,7 +21,7 @@ class channel;
 class Server {
 private:
     std::string _server_name;
-    int iterator;
+    size_t iterator;
     int _port;
     int _server_fd;
     bool _exit;

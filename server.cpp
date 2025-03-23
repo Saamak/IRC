@@ -95,13 +95,13 @@ int Server::HandleCommunication(int i)
     char buffer[1024];
     int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
     buffer[bytes_read] = '\0';
-    std::string client_test(buffer);
-    std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
     if (buffer[0] == '\0')
     {
         integrity("QUIT");
         return (i);
     }
+    std::string client_test(buffer);
+    std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
     if (buffer_client_tmp.empty() == false)
     {
         client_test = buffer_client_tmp + client_test;
@@ -123,12 +123,13 @@ int Server::HandleCommunication(int i)
     }
     else
     {
+        client_lst[iterator - 1]->emptyBufferClient();
         std::vector<std::string> splitted = split(client_test, '\n');
         for(size_t x = 0; x < splitted.size(); x++)
         {
+            P << B_Y << splitted[x] << RESET << E;
             integrity(splitted[x]);
         }
-        client_lst[iterator - 1]->emptyBufferClient();
     }
     return (i);
 }
