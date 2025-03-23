@@ -39,6 +39,7 @@ public:
     // void whowas();
 
     void sendIt(std::string def, int fdClient);
+    void parsing_param_mode(const std::string &client_data, std::vector<std::pair<std::string,std::string> > arguments);
 };
 
 #endif // COMMAND_HPP

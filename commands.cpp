@@ -205,6 +205,57 @@ void command::join(const std::string &client_data) {
     _server.printChannelsAndClients();
 }
 
+#include <utility>
+
+bool ft_is_mode(char c)
+{
+    if (c == '+' || c == '-' || c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l')
+        return true;
+    return false;
+}
+
+std::string checker_flag(const std::string &flag)
+{
+    std::string Error;
+    size_t x = 0;
+    while (x < flag.size() && ft_is_mode(flag[x]))
+        x++;
+    if (x == flag.size())
+        return ("");
+    Error = flag[x];
+    return Error;
+
+}
+
+void command::parsing_param_mode(const std::string &client_data, std::vector<std::pair<std::string,std::string> > arguments)
+{
+    (void)arguments;
+    std::istringstream iss(client_data);
+    std::string command;
+    std::string channel_name;
+    std::string flag;
+
+    iss >> command;
+    iss >> channel_name;
+    iss >> flag;
+
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    int fd = pollfd_tmp[_server.getIterator()].fd;
+
+    std::string Error;
+    Error = checker_flag(flag);
+    if (Error.size() > 0)
+    {
+        sendIt(ERR_UNKNOWNMODE(nickname, Error), fd);
+        return ;
+    }
+    
+    //Checker de bonne mise en forme, que + et -, puis que des arguments valides, sinnon error;
+    //std::vector<std::pair<std::string,std::string> > Arg;
+}
+
 void command::mode(const std::string &client_data) { //MODE #cc +i
     std::istringstream iss(client_data);
     std::string command;
@@ -236,6 +287,9 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
         sendIt(RPL_CHANNELMODEIS(nickname, channel_name, flag), fd); //affiche modes
     else
     {
+        //APPELLE FONCTION PIERRERULENCE, DECOUPE client_data et envoie a pierrot l'asticot le reste.
+        std::vector<std::pair<std::string,std::string> > arguments;
+        parsing_param_mode(client_data, arguments);
         std::vector<channel*>& Channel_tmp = _server.getChannelsList();
         for (size_t x = 0; x < Channel_tmp.size(); x++)
         {
