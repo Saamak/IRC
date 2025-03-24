@@ -21,7 +21,6 @@ public:
     command(Server& server);
     void pass(const std::string &client_data);
     void nick(const std::string &client_data);
-    void myExit(const std::string &client_data);
     void user(const std::string &client_data);
     void join(const std::string &client_data);
     void cap(const std::string &client_data);

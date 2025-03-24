@@ -6,11 +6,9 @@
 #include <netinet/in.h>
 #include "includes/command.hpp"
 #include <algorithm> 
+#include <csignal>
 
-void    Server::setBoolExit(bool tmp)
-{
-    _exit = tmp;
-}
+bool exit_b = false;
 
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
     P <<BOLD <<"SERVEUR CONSTRUCTOR" <<RESET <<E;
@@ -28,11 +26,25 @@ void Server::integrity(std::string client_data) {
     cmdd.exec(client_data);
 }
 
+void Server::myExit() {
+    // delete(getNewClient());
+    // setNewClient(NULL); // Réinitialiser le pointeur
+
+    for (size_t i = 0; i < client_lst.size(); ++i) {
+        if (client_lst[i] != NULL) { // Vérifier si le pointeur est valide
+            delete client_lst[i];
+            client_lst[i] = NULL; // Mettre le pointeur à NULL après suppression
+        }
+    }
+    client_lst.clear();
+    _poll_fds.clear();
+    clearChannels();
+}
+
 bool Server::init(char *pass)
 {
     _server_name = "German Elite V2";
     _password = pass;
-    _exit = false;
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0)
     {
@@ -134,6 +146,15 @@ int Server::HandleCommunication(int i)
     return (i);
 }
 
+void handleSignal(int signal)
+{
+    if(signal == SIGINT)
+    {
+        std::cout << BOLD << "SIGINT Received" << E;
+        exit_b = true;
+    }
+}
+
 void Server::start()
 {
     if (listen(_server_fd, 5) < 0)
@@ -149,8 +170,12 @@ void Server::start()
 
     while (true)
     {
-        if (_exit == true)
-            return ;
+        signal(SIGINT, handleSignal);
+        if(exit_b == true)
+        {
+            P <<B_Y << "SERVER OFF" << E;
+            myExit();
+        }
         int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (poll_count < 0)
         {
@@ -177,12 +202,6 @@ void Server::start()
     }
 }
 
-void Server::stop() {
-    if (_server_fd != -1) {
-        close(_server_fd);
-        _server_fd = -1;
-    }
-}
 
 void Server::addChannel(channel* new_channel) {
     channels_lst.push_back(new_channel);
@@ -271,43 +290,10 @@ std::string Server::getServerName(){
     return _server_name;
 }
 
-void Server::sendIrcMessage(const std::string& server_name, const std::string& code, const std::string& nickname, const std::string& channel_name, const std::string& additional_info, int fd) {
-    std::string message;
-
-    // Gérer les différents codes IRC
-    if (code == "ERR_NEEDMOREPARAMS") {
-        message = ":" + server_name + " 461 " + nickname + " " + channel_name + " :Not enough parameters\r\n";
-    } else if (code == "ERR_BANNEDFROMCHAN") {
-        message = ":" + server_name + " 474 " + nickname + " " + channel_name + " :Cannot join channel (+b)\r\n";
-    } else if (code == "ERR_INVITEONLYCHAN") {
-        message = ":" + server_name + " 473 " + nickname + " " + channel_name + " :Cannot join channel (+i)\r\n";
-    } else if (code == "ERR_BADCHANNELKEY") {
-        message = ":" + server_name + " 475 " + nickname + " " + channel_name + " :Cannot join channel (+k)\r\n";
-    } else if (code == "ERR_CHANNELISFULL") {
-        message = ":" + server_name + " 471 " + nickname + " " + channel_name + " :Cannot join channel (+l)\r\n";
-    } else if (code == "ERR_BADCHANMASK") {
-        message = ":" + server_name + " 476 " + nickname + " " + channel_name + " :Bad channel mask\r\n";
-    } else if (code == "ERR_NOSUCHCHANNEL") {
-        message = ":" + server_name + " 403 " + nickname + " " + channel_name + " :No such channel\r\n";
-    } else if (code == "ERR_TOOMANYCHANNELS") {
-        message = ":" + server_name + " 405 " + nickname + " " + channel_name + " :You have joined too many channels\r\n";
-    } else if (code == "RPL_TOPIC") {
-        message = ":" + server_name + " 332 " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
-    } else if (code == "RPL_NAMREPLY") {
-        message = ":" + server_name + " 353 " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
-    } else if (code == "RPL_ENDOFNAMES") {
-        message = ":" + server_name + " 366 " + nickname + " " + channel_name + " :End of /NAMES list\r\n";
-    } else if (code == "ERR_NOTONCHANNEL") {
-        message = ":" + server_name + " 442 " + nickname + " " + channel_name + " :You're not on that channel\r\n";
-    } else if (code == "ERR_USERNOTINCHANNEL") {
-        message = ":" + server_name + " 441 " + nickname + " " + channel_name + " :They aren't on that channel\r\n";
-    } else if (code == "ERR_UNKNOWNCOMMAND") {
-        message = ":" + server_name + " 421 " + nickname + " " + channel_name + " :Unknown command\r\n";
-    } else {
-        // Code inconnu ou générique
-        message = ":" + server_name + " : " + code + " " + nickname + " " + channel_name + " :" + additional_info + "\r\n";
+void Server::clearChannels() {
+    for (size_t i = 0; i < channels_lst.size(); ++i) {
+        delete channels_lst[i]; // Libérer chaque canal
     }
-
-    // Envoyer le message
-    send(fd, message.c_str(), message.size(), 0);
+    channels_lst.clear(); // Vider le vecteur
+    std::cout << "All channels have been cleared." << std::endl;
 }

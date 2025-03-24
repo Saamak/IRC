@@ -24,7 +24,6 @@ private:
     size_t iterator;
     int _port;
     int _server_fd;
-    bool _exit;
     std::string _password;
     struct sockaddr_in _server_addr;
     std::vector<struct pollfd> _poll_fds; // va contenir tout les fds.
@@ -38,7 +37,8 @@ public:
     ~Server();
     bool init(char *pass);
     void start();
-    void stop();
+    void myExit();
+    void clearChannels();
     void integrity(std::string client_data);
     void addChannel(channel* new_channel);
     void clientConnected();
@@ -50,7 +50,6 @@ public:
 
     //SETTER GETTER
     int getPort() const { return _port; }
-    void    setBoolExit(bool tmp);
     client* getNewClient() const;
     std::vector<channel *>& getChannelsList();
     std::vector<client*>& getClientList();
@@ -63,7 +62,6 @@ public:
     std::string getPassword();
     std::string getServerName();
 
-    void sendIrcMessage(const std::string& server_name, const std::string& code, const std::string& nickname, const std::string& channel_name, const std::string& additional_info, int fd);
 };
 
 #endif // SERVER_HPP

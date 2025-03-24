@@ -21,29 +21,28 @@ void command::pass(const std::string &client_data) // Pass daniel
     std::vector<client*>& Client_tmp = _server.getClientList();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
+    size_t iterator = _server.getIterator() - 1;
 
     if (password.empty()) {
         // Utilisation de sendIrcMessage pour ERR_NEEDMOREPARAMS
-        _server.sendIrcMessage(_server.getServerName(), "ERR_NEEDMOREPARAMS", "", "", "Not enough parameters", fd);
-        exec("QUIT");
+        sendIt(ERR_NEEDMOREPARAMS(Client_tmp[iterator]->getNickname(), command), fd);
         return;
     }
 
-    if (Client_tmp[_server.getIterator() - 1]->getRegistered()) {
+    if (Client_tmp[iterator]->getRegistered()) {
         // Utilisation de sendIrcMessage pour ERR_ALREADYREGISTRED
-        _server.sendIrcMessage(_server.getServerName(), "ERR_ALREADYREGISTRED", "", "", "You are already registered", fd);
+        sendIt(ERR_ALREADYREGISTRED(Client_tmp[iterator]->getNickname()), fd);
         return;
     }
 
-    if (!Client_tmp[_server.getIterator() - 1]->getRegistered() &&
-        (Client_tmp[_server.getIterator() - 1]->getNickCheck() || Client_tmp[_server.getIterator() - 1]->getUserCheck())) {
-        // Utilisation de sendIrcMessage pour une erreur personnalisée
-        _server.sendIrcMessage(_server.getServerName(), "ERR_BADCOMMANDORDER", "", "", "Commands bad order during connection, PASS/NICK/USER. Client Disconnected", fd);
+    if (!Client_tmp[iterator]->getRegistered() &&
+        (Client_tmp[iterator]->getNickCheck() || Client_tmp[iterator]->getUserCheck())) {
+        sendIt(ERR_BADCOMMANDORDER(Client_tmp[iterator]->getNickname()), fd);
         exec("QUIT");
         return;
     }
-    Client_tmp[_server.getIterator() -1]->setPassCheck(true);
-    Client_tmp[_server.getIterator() -1]->setClientPassword(password);
+    Client_tmp[iterator]->setPassCheck(true);
+    Client_tmp[iterator]->setClientPassword(password);
 }
 
 void command::nick(const std::string &client_data) {
@@ -51,6 +50,8 @@ void command::nick(const std::string &client_data) {
     std::vector<client*>& Client_tmp = _server.getClientList();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
+    size_t iterator = _server.getIterator() - 1;
+
     std::istringstream iss(client_data);
     std::string command;
     std::string nickname;
@@ -58,29 +59,28 @@ void command::nick(const std::string &client_data) {
     iss >> nickname;
     P << nickname << E;
     if (nickname.empty()) {
-        _server.sendIrcMessage(_server.getServerName(), "ERR_NEEDMOREPARAMS", "", "", "Not enough parameters", fd);
+        sendIt(ERR_NEEDMOREPARAMS(Client_tmp[iterator]->getNickname(), command), fd);
         exec("QUIT");
         return;
     }
-    if(Client_tmp[_server.getIterator() -1]->getRegistered())
+    if(Client_tmp[iterator]->getRegistered())
     {
         //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LE NOUVEAU NICK, DONC LAISSER L'ACTUEl
-        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
+        Client_tmp[iterator]->setNickname(nickname);
         std::string message = "You are now known as " + nickname + "\n";
         send(fd, message.c_str(), message.size(), 0);
         return ;
     }
-    if(Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getUserCheck() == false && Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
+    if(Client_tmp[iterator]->getPassCheck() && Client_tmp[iterator]->getUserCheck() == false && Client_tmp[iterator]->getNickCheck() == false)
     {
         //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LA CONNECTION
-        Client_tmp[_server.getIterator() -1]->setNickCheck(true);
-        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
+        Client_tmp[iterator]->setNickCheck(true);
+        Client_tmp[iterator]->setNickname(nickname);
         return ;
     }
-    if(Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck())
+    if(Client_tmp[iterator]->getPassCheck() == false || Client_tmp[iterator]->getNickCheck())
     {
-        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
-        send(fd, message.c_str(), message.size(), 0);
+        sendIt(ERR_BADCOMMANDORDER(Client_tmp[iterator]->getNickname()), fd);
         exec("QUIT");
         return ;
     }
@@ -89,6 +89,7 @@ void command::nick(const std::string &client_data) {
 void command::user(const std::string &client_data) 
 {
     std::vector<client*>& Client_tmp = _server.getClientList();
+    size_t iterator = _server.getIterator() - 1;
     std::istringstream iss(client_data);
     std::string command;
     std::string username;
@@ -105,28 +106,28 @@ void command::user(const std::string &client_data)
         exec("QUIT");
         return ;
     }
-    if(Client_tmp[_server.getIterator() -1]->getRegistered())
+    if(Client_tmp[iterator]->getRegistered())
     {
-        std::string nickname = Client_tmp[_server.getIterator() -1]->getNickname();
+        std::string nickname = Client_tmp[iterator]->getNickname();
         sendIt(ERR_ALREADYREGISTRED(nickname), fd);
         return ;
     }
-    if (Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
+    if (Client_tmp[iterator]->getPassCheck() == false || Client_tmp[iterator]->getNickCheck() == false)
     {
         std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
         send(fd, message.c_str(), message.size(), 0);
         exec("QUIT");
         return ;
     }
-    if (Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getNickCheck())
+    if (Client_tmp[iterator]->getPassCheck() && Client_tmp[iterator]->getNickCheck())
     {
-        Client_tmp[_server.getIterator() -1]->setUserCheck(true);
-        Client_tmp[_server.getIterator() -1]->setUsername(username);
-        if (Client_tmp[_server.getIterator() -1]->getClientPassword() == _server.getPassword())
+        Client_tmp[iterator]->setUserCheck(true);
+        Client_tmp[iterator]->setUsername(username);
+        if (Client_tmp[iterator]->getClientPassword() == _server.getPassword())
         {
-            std::string nickname = Client_tmp[_server.getIterator() -1]->getNickname();
+            std::string nickname = Client_tmp[iterator]->getNickname();
             sendIt(RPL_WELCOME(nickname), fd);
-            Client_tmp[_server.getIterator() -1]->setRegistered(true);
+            Client_tmp[iterator]->setRegistered(true);
         }   
         else
         {
@@ -148,7 +149,8 @@ void command::join(const std::string &client_data) {
 
     std::vector<channel*>& Channel_tmp = _server.getChannelsList();
     std::vector<client*>& Client_tmp = _server.getClientList();
-    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    size_t iterator = _server.getIterator() - 1;
+    std::string nickname = Client_tmp[iterator]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
 
@@ -157,7 +159,7 @@ void command::join(const std::string &client_data) {
         if (Channel_tmp[x]->getName() == channel_name) {
             channelExists = true;
             if (!Channel_tmp[x]->IsInChannel(nickname)) {
-                Channel_tmp[x]->addClient(Client_tmp[_server.getIterator() - 1]);
+                Channel_tmp[x]->addClient(Client_tmp[iterator]);
                 P << "Client added to existing channel" << E;
             }
             break;
@@ -166,8 +168,8 @@ void command::join(const std::string &client_data) {
 
     if (!channelExists) {
         channel* new_channel = new channel(channel_name);
-        new_channel->addClient(Client_tmp[_server.getIterator() - 1]);
-        new_channel->addOperator(Client_tmp[_server.getIterator() - 1]);
+        new_channel->addClient(Client_tmp[iterator]);
+        new_channel->addOperator(Client_tmp[iterator]);
         _server.addChannel(new_channel);
         P << "Channel created and client added" << B_R << "(Operator) " << RESET << new_channel->getName() << E;
     }
@@ -235,7 +237,8 @@ void command::parsing_param_mode(const std::string &client_data, std::vector<std
     iss >> flag;
 
     std::vector<client*>& Client_tmp = _server.getClientList();
-    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    size_t iterator = _server.getIterator() - 1;
+    std::string nickname = Client_tmp[iterator]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
 
@@ -263,7 +266,8 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
 
     // std::vector<channel*>& Channel_tmp = _server.getChannelsList();
     std::vector<client*>& Client_tmp = _server.getClientList();
-    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
+    size_t iterator = _server.getIterator() - 1;
+    std::string nickname = Client_tmp[iterator]->getNickname();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     int fd = pollfd_tmp[_server.getIterator()].fd;
 
@@ -313,6 +317,7 @@ void command::quit(const std::string &client_data) {
         P << "Removing client: " << client_to_remove->getNickname() << E;
         delete client_to_remove;
         Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
+        close(pollfd_tmp[iterator].fd); // Mettre le pointeur à NULL
         pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
     } else {
         P << "Client pointer is null, skipping removal" << E;
@@ -362,16 +367,17 @@ void command::topic(const std::string &client_data) {
                 if (Channel_tmp[x]->getName() == channel_name) 
                 {
                     if (Channel_tmp[x]->getTopic().empty()){
-                        _server.sendIrcMessage(_server.getServerName(), "ERR_NOTOPIC", nickname, channel_name, "No topic is set.", fd);
+                        sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
                         return ;
                     }
                     else{
-                        _server.sendIrcMessage(_server.getServerName(), "RPL_TOPIC", nickname, channel_name, Channel_tmp[x]->getTopic(), fd);
+                        sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
                         return;
                     }
                 }
             }
-            _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);
+            std::string chan = "NONE";
+            sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
             return;
         }
         else
@@ -384,17 +390,17 @@ void command::topic(const std::string &client_data) {
                     {
                         //AJOUTER LA CONDITION SI CLIENT EST DANS LE CHAN ET OP, QUE LES DROITS TOPIC SONT OPERATOR OU NON
                         Channel_tmp[x]->setTopic(channel_name);
-                        _server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
+                        //_server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
                         P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E; return;
                     }
                     else
                     {
                         //:Armida.german-elite.net 442 HELL #tata :You're not on that channel // ERR_NOTONCHANNEL
-                        _server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
+                        sendIt(ERR_NOTONCHANNEL(nickname, channel_name), fd);
                     }
                 }
             }
-            _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);return;
+            sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
         }
     }
     if(channel_name.size() > 0 && channel_name[0] == '#' && topic_name.size() > 0)
@@ -406,28 +412,20 @@ void command::topic(const std::string &client_data) {
         if (Channel_tmp[x]->getName() == channel_name) {
             if (topic_name.empty()) {
                 if (Channel_tmp[x]->getTopic().empty()) {
-                    _server.sendIrcMessage(_server.getServerName(), "ERR_NOTOPIC", nickname, channel_name, "No topic is set.", fd);
+                    sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
                 } else {
-                    _server.sendIrcMessage(_server.getServerName(), "RPL_TOPIC", nickname, channel_name, Channel_tmp[x]->getTopic(), fd);
+                    sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
                 }
             } else {
                 Channel_tmp[x]->setTopic(topic_name);
-                _server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, channel_name, topic_name, fd);
+                sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
                 P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E;
             }
             return;
         }
     }
 
-    _server.sendIrcMessage(_server.getServerName(), "ERR_NOSUCHCHANNEL", nickname, channel_name, "", fd);
-}
-
-void command::myExit(const std::string &client_data)
-{
-    (void)client_data;
-    delete(_server.getNewClient());
-    _server.setNewClient(NULL); // Réinitialiser le pointeur
-    _server.setBoolExit(true);
+    sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
 }
 
 void    command::cap(const std::string &client_data)
@@ -454,8 +452,6 @@ command::command(Server& server) : _server(server)
     // _cmds["WHO"] = &command::who;s
     // _cmds["WHOIS"] = &command::whois;
     // _cmds["WHOWAS"] = &command::whowas;
-
-    _cmds["MYEXIT"] = &command::myExit;
 }
 
 void command::exec(const std::string &client_data) {
@@ -470,7 +466,8 @@ void command::exec(const std::string &client_data) {
     else 
     {
         std::vector<client*>& Client_tmp = _server.getClientList();
-        if (Client_tmp[_server.getIterator() -1]->getRegistered() == false)
+        size_t iterator = _server.getIterator() - 1;
+        if (Client_tmp[iterator]->getRegistered() == false)
         {
             std::string message = "Command not found during connection PASS/NICK/USER\nClient Disconnected\n";
             std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();

@@ -24,5 +24,5 @@
 # define ERR_BADCHANNELKEY(input, chan)			"475 " + input + " " + chan + " :Cannot join channel (+k)"
 # define ERR_NOPRIVILEGES(input)				"481 " + input + " :Permission Denied- You're not an IRC operator"
 # define ERR_CHANOPRIVSNEEDED(input, chan)		"482 " + input + " " + chan + " :You're not channel operator"
-
+# define ERR_BADCOMMANDORDER(input)                  "CUSTOM" + input + " :Commands bad order during connection, PASS/NICK/USER. Client Disconnected"
 #endif
