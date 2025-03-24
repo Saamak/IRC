@@ -12,6 +12,8 @@ typedef void(command::*CommandFunction)(const std::string&);
 
 class command
 {
+private:
+    size_t iterator_mode;
 public:
     ~command();
     std::string userInput;
@@ -38,7 +40,9 @@ public:
     // void whowas();
 
     void sendIt(std::string def, int fdClient);
-    void parsing_param_mode(const std::string &client_data, std::vector<std::pair<std::string,std::string> > arguments);
+    std::vector<std::pair<std::string,std::string> > parsing_param_mode(const std::string &client_data);
+    std::pair<std::string,std::string> get_mode_and_sign(std::string flag);
+    std::string get_previous_sign(std::string flag);
 };
 
 #endif // COMMAND_HPP
