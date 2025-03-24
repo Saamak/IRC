@@ -6,6 +6,7 @@
 #include "includes/config.hpp"
 #include "includes/client.hpp"
 #include <cstdlib> 
+#include <utility>
 
 command::~command(){
     P <<BOLD<< "COMMAND DESTRUCTEUR" <<RESET<< E;
@@ -200,8 +201,6 @@ void command::join(const std::string &client_data) {
     _server.printChannelsAndClients();
 }
 
-#include <utility>
-
 bool ft_is_mode(char c)
 {
     if (c == '+' || c == '-' || c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l')
@@ -222,9 +221,31 @@ std::string checker_flag(const std::string &flag)
 
 }
 
-void command::parsing_param_mode(const std::string &client_data, std::vector<std::pair<std::string,std::string> > arguments)
+std::string command::get_previous_sign(std::string flag)
 {
-    (void)arguments;
+    size_t count = iterator_mode;
+    while(count > 0 && (flag[count] != '+' && flag[count] != '-'))
+        count--;
+    if (count == 0 && (flag[count] != '+' && flag[count] != '-'))
+        return "+";
+    std::string sign;
+    sign = flag[count];
+    return (sign);
+}
+
+std::pair<std::string,std::string> command::get_mode_and_sign(std::string flag)
+{
+    while (iterator_mode < flag.size() && (flag[iterator_mode] == '+' || flag[iterator_mode] == '-'))
+        iterator_mode++;
+    std::string mode;
+    mode = flag[iterator_mode];
+    std::string sign;
+    sign = get_previous_sign(flag);
+    return (std::make_pair(sign, mode));
+}
+
+std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(const std::string &client_data)
+{
     std::istringstream iss(client_data);
     std::string command;
     std::string channel_name;
@@ -241,12 +262,19 @@ void command::parsing_param_mode(const std::string &client_data, std::vector<std
 
     std::string Error;
     Error = checker_flag(flag);
+    std::vector<std::pair<std::string,std::string> > arguments;
     if (Error.size() > 0)
     {
         sendIt(ERR_UNKNOWNMODE(nickname, Error), fd);
-        return ;
+        return arguments;
     }
-    
+    while (iterator_mode < flag.size())
+    {
+        std::pair<std::string,std::string> tmp = get_mode_and_sign(flag);
+        arguments.push_back(tmp);
+        iterator_mode++;
+    }
+    return arguments;
     //Checker de bonne mise en forme, que + et -, puis que des arguments valides, sinnon error;
     //std::vector<std::pair<std::string,std::string> > Arg;
 }
@@ -283,8 +311,12 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
     else
     {
         //APPELLE FONCTION PIERRERULENCE, DECOUPE client_data et envoie a pierrot l'asticot le reste.
-        std::vector<std::pair<std::string,std::string> > arguments;
-        parsing_param_mode(client_data, arguments);
+        std::vector<std::pair<std::string,std::string> > arguments = parsing_param_mode(client_data);
+        for (size_t x = 0; x < arguments.size(); x++)
+        {
+            P << B_R << "Arguments[" << x << "] => " << arguments[x].first << RESET << E;
+            P << B_R << "Arguments[" << x << "] => " << arguments[x].second << RESET << E << E;
+        }
         std::vector<channel*>& Channel_tmp = _server.getChannelsList();
         for (size_t x = 0; x < Channel_tmp.size(); x++)
         {
@@ -438,6 +470,7 @@ void    command::cap(const std::string &client_data)
 
 command::command(Server& server) : _server(server)
 {
+    iterator_mode = 0;
     _cmds["PASS"] = &command::pass;
     _cmds["NICK"] = &command::nick;
     _cmds["USER"] = &command::user;
