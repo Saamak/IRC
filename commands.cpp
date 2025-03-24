@@ -274,6 +274,13 @@ std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(con
         arguments.push_back(tmp);
         iterator_mode++;
     }
+    for (size_t x = 0; x < arguments.size(); x++)
+    {
+        if (!ft_is_mode(arguments[x].second[0]))
+        {
+            arguments.erase(arguments.begin() + x);
+        }
+    }
     return arguments;
     //Checker de bonne mise en forme, que + et -, puis que des arguments valides, sinnon error;
     //std::vector<std::pair<std::string,std::string> > Arg;
@@ -314,8 +321,8 @@ void command::mode(const std::string &client_data) { //MODE #cc +i
         std::vector<std::pair<std::string,std::string> > arguments = parsing_param_mode(client_data);
         for (size_t x = 0; x < arguments.size(); x++)
         {
-            P << B_R << "Arguments[" << x << "] => " << arguments[x].first << RESET << E;
-            P << B_R << "Arguments[" << x << "] => " << arguments[x].second << RESET << E << E;
+            P << B_G << "Arguments[" << x << "] => " << arguments[x].first << RESET << E;
+            P << B_G << "Arguments[" << x << "] => " << arguments[x].second << RESET << E << E;
         }
         std::vector<channel*>& Channel_tmp = _server.getChannelsList();
         for (size_t x = 0; x < Channel_tmp.size(); x++)
