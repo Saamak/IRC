@@ -26,5 +26,5 @@ int main(int ac, char **av){
     P << B_G"\n-----WELCOME TO IRC SERVER-----\n" << RESET << E;
     serv.init(av[2]);
     serv.start();
-    serv.stop();
+    serv.myExit();
 }

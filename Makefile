@@ -5,20 +5,27 @@ SRC = main.cpp \
 	  commands.cpp \
 	  channel.cpp \
 	  config.cpp \
-	  client.cpp
+	  client.cpp \
+	  Mode.cpp \
+	  Join.cpp \
+	  User.cpp \
+	  Nick.cpp \
+	  Pass.cpp \
+	  PrivateMessage.cpp \
+	  Invite.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
-CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CXX = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ)

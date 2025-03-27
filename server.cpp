@@ -6,11 +6,9 @@
 #include <netinet/in.h>
 #include "includes/command.hpp"
 #include <algorithm> 
+#include <csignal>
 
-void    Server::setBoolExit(bool tmp)
-{
-    _exit = tmp;
-}
+bool exit_b = false;
 
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
     P <<BOLD <<"SERVEUR CONSTRUCTOR" <<RESET <<E;
@@ -28,11 +26,25 @@ void Server::integrity(std::string client_data) {
     cmdd.exec(client_data);
 }
 
+void Server::myExit() {
+    // delete(getNewClient());
+    // setNewClient(NULL); // Réinitialiser le pointeur
+
+    for (size_t i = 0; i < client_lst.size(); ++i) {
+        if (client_lst[i] != NULL) { // Vérifier si le pointeur est valide
+            delete client_lst[i];
+            client_lst[i] = NULL; // Mettre le pointeur à NULL après suppression
+        }
+    }
+    client_lst.clear();
+    _poll_fds.clear();
+    clearChannels();
+}
+
 bool Server::init(char *pass)
 {
     _server_name = "German Elite V2";
     _password = pass;
-    _exit = false;
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0)
     {
@@ -95,13 +107,13 @@ int Server::HandleCommunication(int i)
     char buffer[1024];
     int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
     buffer[bytes_read] = '\0';
-    std::string client_test(buffer);
-    std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
     if (buffer[0] == '\0')
     {
         integrity("QUIT");
         return (i);
     }
+    std::string client_test(buffer);
+    std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
     if (buffer_client_tmp.empty() == false)
     {
         client_test = buffer_client_tmp + client_test;
@@ -123,14 +135,24 @@ int Server::HandleCommunication(int i)
     }
     else
     {
+        client_lst[iterator - 1]->emptyBufferClient();
         std::vector<std::string> splitted = split(client_test, '\n');
         for(size_t x = 0; x < splitted.size(); x++)
         {
+            P << B_Y << splitted[x] << RESET << E;
             integrity(splitted[x]);
         }
-        client_lst[iterator - 1]->emptyBufferClient();
     }
     return (i);
+}
+
+void handleSignal(int signal)
+{
+    if(signal == SIGINT)
+    {
+        std::cout << BOLD << "SIGINT Received" << E;
+        exit_b = true;
+    }
 }
 
 void Server::start()
@@ -148,8 +170,12 @@ void Server::start()
 
     while (true)
     {
-        if (_exit == true)
-            return ;
+        signal(SIGINT, handleSignal);
+        if(exit_b == true)
+        {
+            P <<B_Y << "SERVER OFF" << E;
+            myExit();
+        }
         int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (poll_count < 0)
         {
@@ -176,12 +202,6 @@ void Server::start()
     }
 }
 
-void Server::stop() {
-    if (_server_fd != -1) {
-        close(_server_fd);
-        _server_fd = -1;
-    }
-}
 
 void Server::addChannel(channel* new_channel) {
     channels_lst.push_back(new_channel);
@@ -268,4 +288,12 @@ std::string Server::getPassword()
 
 std::string Server::getServerName(){
     return _server_name;
+}
+
+void Server::clearChannels() {
+    for (size_t i = 0; i < channels_lst.size(); ++i) {
+        delete channels_lst[i]; // Libérer chaque canal
+    }
+    channels_lst.clear(); // Vider le vecteur
+    std::cout << "All channels have been cleared." << std::endl;
 }

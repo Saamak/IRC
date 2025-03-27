@@ -6,300 +6,224 @@
 #include "includes/config.hpp"
 #include "includes/client.hpp"
 #include <cstdlib> 
+#include <utility>
 
 command::~command(){
     P <<BOLD<< "COMMAND DESTRUCTEUR" <<RESET<< E;
 }
 
-void command::pass(const std::string &client_data) // Pass daniel
+bool ft_is_mode(char c)
 {
-    std::istringstream iss(client_data);
-    std::string command;
-    std::string password;
-    iss >> command;
-    iss >> password;
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    if (password.empty())
-    {
-        std::string message = "ERR_NEEDMOREPARAMS\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-    if(Client_tmp[_server.getIterator() -1]->getRegistered())
-    {
-        std::string message = "ERR_ALREADYREGISTRED\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        return ;
-    }
-    if (Client_tmp[_server.getIterator() -1]->getRegistered() == false && (Client_tmp[_server.getIterator() -1]->getNickCheck() == true || Client_tmp[_server.getIterator() -1]->getUserCheck() == true))
-    {
-        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-    Client_tmp[_server.getIterator() -1]->setPassCheck(true);
-    Client_tmp[_server.getIterator() -1]->setClientPassword(password);
+    if (c == '+' || c == '-' || c == 'i' || c == 't' || c == 'k' || c == 'o' || c == 'l')
+        return true;
+    return false;
 }
 
-void command::nick(const std::string &client_data) {
-
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    std::istringstream iss(client_data);
-    std::string command;
-    std::string nickname;
-    iss >> command;
-    iss >> nickname;
-    P << nickname << E;
-    if(nickname.empty())
-    {
-        std::string message = "ERR_NEEDMOREPARAMS\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-    if(Client_tmp[_server.getIterator() -1]->getRegistered())
-    {
-        //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LE NOUVEAU NICK, DONC LAISSER L'ACTUEl
-        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
-        std::string message = "You are now known as " + nickname + "\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        return ;
-    }
-    if(Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getUserCheck() == false && Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
-    {
-        //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LA CONNECTION
-        Client_tmp[_server.getIterator() -1]->setNickCheck(true);
-        Client_tmp[_server.getIterator() -1]->setNickname(nickname);
-        return ;
-    }
-    if(Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck())
-    {
-        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-}
-
-void command::user(const std::string &client_data) 
+std::string checker_flag(const std::string &flag)
 {
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    std::istringstream iss(client_data);
-    std::string command;
-    std::string username;
-    iss >> command;
-    iss >> username;
-    if (username.empty())
-    {
-        std::string message = "ERR_NEEDMOREPARAMS\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-    if(Client_tmp[_server.getIterator() -1]->getRegistered())
-    {
-        std::string message = "ERR_ALREADYREGISTRED\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        return ;
-    }
-    if (Client_tmp[_server.getIterator() -1]->getPassCheck() == false || Client_tmp[_server.getIterator() -1]->getNickCheck() == false)
-    {
-        std::string message = "Commands bad order during connection, PASS/NICK/USER\nClient Disconnected\n";
-        std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-        send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-        exec("QUIT");
-        return ;
-    }
-    if (Client_tmp[_server.getIterator() -1]->getPassCheck() && Client_tmp[_server.getIterator() -1]->getNickCheck())
-    {
-        Client_tmp[_server.getIterator() -1]->setUserCheck(true);
-        Client_tmp[_server.getIterator() -1]->setUsername(username);
-        if (Client_tmp[_server.getIterator() -1]->getClientPassword() == _server.getPassword())
-        {
-            std::string message = "Client Connected in\n" + _server.getServerName();
-            std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-            send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-            Client_tmp[_server.getIterator() -1]->setRegistered(true);
-        }   
-        else
-        {
-            std::string message = "Wrong Password\nClient Disconnected\n";
-            std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-            send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
-            exec("QUIT");
-        }
-        return ;
-    }
+    std::string Error;
+    size_t x = 0;
+    while (x < flag.size() && ft_is_mode(flag[x]))
+        x++;
+    if (x == flag.size())
+        return ("");
+    Error = flag[x];
+    return Error;
+
 }
 
-void command::join(const std::string &client_data) {
+std::string command::get_previous_sign(std::string flag)
+{
+    size_t count = iterator_mode;
+    while(count > 0 && (flag[count] != '+' && flag[count] != '-'))
+        count--;
+    if (count == 0 && (flag[count] != '+' && flag[count] != '-'))
+        return "+";
+    std::string sign;
+    sign = flag[count];
+    return (sign);
+}
+
+std::pair<std::string,std::string> command::get_mode_and_sign(std::string flag)
+{
+    while (iterator_mode < flag.size() && (flag[iterator_mode] == '+' || flag[iterator_mode] == '-'))
+        iterator_mode++;
+    std::string mode;
+    mode = flag[iterator_mode];
+    std::string sign;
+    sign = get_previous_sign(flag);
+    return (std::make_pair(sign, mode));
+}
+
+std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(const std::string &client_data)
+{
     std::istringstream iss(client_data);
     std::string command;
     std::string channel_name;
+    std::string flag;
 
-    //GERER LES MULTIPLES INVITATIONS , 1 SEULE INVITATION PAR PERSONNE pour eviter les soucis, + Attention aux limites max dans le channel, quand le channel depasse la nouvelle limite installee 
     iss >> command;
     iss >> channel_name;
+    iss >> flag;
 
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    size_t iterator = _server.getIterator() - 1;
+    std::string nickname = Client_tmp[iterator]->getNickname();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    int fd = pollfd_tmp[_server.getIterator()].fd;
+
+    std::string Error;
+    Error = checker_flag(flag);
+    std::vector<std::pair<std::string,std::string> > arguments;
+    if (Error.size() > 0)
+    {
+        sendIt(ERR_UNKNOWNMODE(nickname, Error), fd);
+        return arguments;
+    }
+    while (iterator_mode < flag.size())
+    {
+        std::pair<std::string,std::string> tmp = get_mode_and_sign(flag);
+        arguments.push_back(tmp);
+        iterator_mode++;
+    }
+    for (size_t x = 0; x < arguments.size(); x++)
+    {
+        if (!ft_is_mode(arguments[x].second[0]))
+        {
+            arguments.erase(arguments.begin() + x);
+        }
+    }
+    return arguments;
+    //Checker de bonne mise en forme, que + et -, puis que des arguments valides, sinnon error;
+    //std::vector<std::pair<std::string,std::string> > Arg;
+}
+
+void command::quit(const std::string &client_data) {
+    (void)client_data;
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    size_t iterator = _server.getIterator();
+
+    if (iterator < 1 || iterator > Client_tmp.size()) {
+        P << " invalid iterator: " << iterator << E;
+        return;
+    }
+
+    // Supprimer le client de manière sécurisée
+    client* client_to_remove = Client_tmp[iterator - 1];
+    if (client_to_remove) {
+        P << "Removing client: " << client_to_remove->getNickname() << E;
+        delete client_to_remove;
+        Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
+        close(pollfd_tmp[iterator].fd); // Mettre le pointeur à NULL
+        pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
+    } else {
+        P << "Client pointer is null, skipping removal" << E;
+    }
+}
+
+
+size_t command::getChanIterator(std::string channelname)
+{
     std::vector<channel*>& Channel_tmp = _server.getChannelsList();
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    bool channelExists = false;
-    for (size_t x = 0; x < Channel_tmp.size(); x++) {
-        if (Channel_tmp[x]->getName() == channel_name) {
-            channelExists = true;
-            if (!Channel_tmp[x]->IsInChannel(Client_tmp[_server.getIterator() - 1]->getNickname())) {
-                Channel_tmp[x]->addClient(Client_tmp[_server.getIterator() - 1]);
-                P << "Client added to existing channel" << E;
-            }
-            break;
-        }
+    for (size_t x = 0; x < Channel_tmp.size(); x++)
+    {
+        if (Channel_tmp[x]->getName() == channelname) 
+            return x;
     }
-    if (!channelExists) {
-        channel* new_channel = new channel(channel_name);
-        new_channel->addClient(Client_tmp[_server.getIterator() - 1]);
-        new_channel->addOperator(Client_tmp[_server.getIterator() - 1]);
-        _server.addChannel(new_channel);
-        P << "Channel created and client added"<<B_R<< "(Operator) " <<RESET<< new_channel->getName()<<E;
-    }
-
-    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
-    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-
-    // Send JOIN message
-    std::string topic = "Welcome to the channel!";
-    std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
-    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
-
-    // Send JOIN message
-    std::string join_message = ":" + nickname + " JOIN " + channel_name + "\r\n";
-    send(pollfd_tmp[_server.getIterator()].fd, join_message.c_str(), join_message.size(), 0);
-
-    // Send RPL_NAMREPLY (353) message
-/*     std::string names_list = "= " + channel_name + " :" + nickname + "\r\n";
-    std::string names_message = ":" + _server.getServerName() + " 353 " + nickname + " " + names_list;
-    send(pollfd_tmp[_server.getIterator()].fd, names_message.c_str(), names_message.size(), 0); */
-
-    _server.printChannelsAndClients();
+    return static_cast<size_t>(-1);
 }
 
-void command::mode(const std::string &client_data) {
-    (void)client_data;
-    std::istringstream iss(client_data);
-    std::string command;
-    std::string channel_name;
-    iss >> command;
-    iss >> channel_name;
-
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
-    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-    std::string names_list = "= " + channel_name + " :" + nickname + "\r\n";
-    std::string names_message = ":" + _server.getServerName() + " 353 " + nickname + " " + names_list;
-    send(pollfd_tmp[_server.getIterator()].fd, names_message.c_str(), names_message.size(), 0);
-    std::cout << "MODEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" << std::endl;
-}
-
-// void command::privmsg() {
-//     std::cout << "PRIVMSG" << std::endl;
-// }
-
-void command::quit(const std::string &client_data)
-{
-    (void)client_data;
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    std::vector<struct pollfd>& Poll_tmp = _server.getPollFd();
-
-    Client_tmp.erase (Client_tmp.begin() + _server.getIterator() - 1);
-    Poll_tmp.erase(Poll_tmp.begin() + _server.getIterator());
-    _server.setIterator(_server.getIterator() - 1);
-
-    std::cout << "QUIT" << std::endl;
-}
-
-void command::topic(const std::string &client_data)
-{
-    P << "TOPIC" << E;
+void command::topic(const std::string &client_data) {
     std::istringstream iss(client_data);
     std::string command;
     std::string channel_name;
     std::string topic_name;
+
     iss >> command;
     iss >> channel_name;
     iss >> topic_name;
+        
+
+    if (!topic_name.empty() && topic_name[0] == ' ') {
+        topic_name.erase(0, 1);
+    }
 
     std::vector<channel*>& Channel_tmp = _server.getChannelsList();
     std::vector<client*>& Client_tmp = _server.getClientList();
     std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
-    std::string username = Client_tmp[_server.getIterator() - 1]->getUsername();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-    size_t x = 0;
+    int fd = pollfd_tmp[_server.getIterator()].fd;
+    size_t x = getChanIterator(channel_name);
+
     if (topic_name.empty())
     {
-        // P << Channel_tmp[0]->getName() << E;
-        // P << channel_name << E;
-        for (x = 0; x < Channel_tmp.size(); x++)
+        if(channel_name.size() > 1  && channel_name[0] == '#')
         {
-            if (Channel_tmp[x]->getName() == channel_name)
+            for (size_t x = 0; x < Channel_tmp.size(); x++)
             {
-                if (Channel_tmp[x]->getTopic().empty())
+                if (Channel_tmp[x]->getName() == channel_name) 
                 {
-                    std::string topic_message = ":" + _server.getServerName() + " 331 " + nickname + " " + channel_name + " :No topic is set.\r\n";
-                    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
-                    return ;
+                    if (Channel_tmp[x]->getTopic().empty()){
+                        sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
+                        return ;
+                    }
+                    else{
+                        sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
+                        return;
+                    }
                 }
-                else
-                {
-                    std::string topic = Channel_tmp[x]->getTopic();
-                    std::string topic_message = ":" + _server.getServerName() + " 332 " + nickname + " " + channel_name + " :" + topic + "\r\n";
-                    send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
-                    return ;
-                }
+            }
+            std::string chan = "NONE";
+            sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
+            return;
         }
-            std::string topic_message = ":" + _server.getServerName() + " 403 " + nickname + " :No Such channel\r\n";
-            send(pollfd_tmp[_server.getIterator()].fd, topic_message.c_str(), topic_message.size(), 0);
+        else
+        {
+            for (size_t x = 0; x < Channel_tmp.size(); x++)
+            {
+                if (Channel_tmp[x]->getName() == channel_name) //verifier que /topic est execute dans un channel existant et dont je fais partit et dont je suis OP
+                {
+                    if (Channel_tmp[x]->IsInChannel(nickname))
+                    {
+                        //AJOUTER LA CONDITION SI CLIENT EST DANS LE CHAN ET OP, QUE LES DROITS TOPIC SONT OPERATOR OU NON
+                        Channel_tmp[x]->setTopic(channel_name);
+                        //_server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
+                        P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E; return;
+                    }
+                    else
+                    {
+                        //:Armida.german-elite.net 442 HELL #tata :You're not on that channel // ERR_NOTONCHANNEL
+                        sendIt(ERR_NOTONCHANNEL(nickname, channel_name), fd);
+                    }
+                }
+            }
+            sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
         }
     }
-    if (!topic_name.empty())
+    if(channel_name.size() > 0 && channel_name[0] == '#' && topic_name.size() > 0)
     {
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        //MESSAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
         Channel_tmp[x]->setTopic(topic_name);
-        // P << B_Y << "channel topic changed to : " <<B_R<< Channel_tmp[x]->getTopic() << RESET<< E;
-        // TOPIC #test :another topic  
-        std::string topic_change = ":" + nickname + "!" + username + "@" + _server.getServerName() + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
-        send(pollfd_tmp[_server.getIterator()].fd, topic_change.c_str(), topic_change.size(), 0);
     }
-}
 
+    for (size_t x = 0; x < Channel_tmp.size(); x++) {
+        if (Channel_tmp[x]->getName() == channel_name) {
+            if (topic_name.empty()) {
+                if (Channel_tmp[x]->getTopic().empty()) {
+                    sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
+                } else {
+                    sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
+                }
+            } else {
+                Channel_tmp[x]->setTopic(topic_name);
+                sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
+                P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E;
+            }
+            return;
+        }
+    }
 
-// void command::kick() {
-//     std::cout << "KICK" << std::endl;
-// }
-
-// void command::invite() {
-//     std::cout << "INVITE" << std::endl;
-// }
-
-void command::myExit(const std::string &client_data)
-{
-    (void)client_data;
-    delete(_server.getNewClient());
-    _server.setNewClient(NULL); // Réinitialiser le pointeur
-    _server.setBoolExit(true);
+    sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
 }
 
 void    command::cap(const std::string &client_data)
@@ -310,31 +234,32 @@ void    command::cap(const std::string &client_data)
 
 command::command(Server& server) : _server(server)
 {
+    iterator_mode = 0;
     _cmds["PASS"] = &command::pass;
     _cmds["NICK"] = &command::nick;
     _cmds["USER"] = &command::user;
     _cmds["JOIN"] = &command::join;
     _cmds["CAP"] = &command::cap;
     // _cmds["PART"] = &command::part;
-    // _cmds["PRIVMSG"] = &command::privmsg;
+    _cmds["PRIVMSG"] = &command::privmsg;
     // _cmds["NOTICE"] = &command::notice;
     _cmds["QUIT"] = &command::quit;
     _cmds["TOPIC"] = &command::topic;
     _cmds["MODE"] = &command::mode;
     // _cmds["KICK"] = &command::kick;
-    // _cmds["INVITE"] = &command::invite;
+    _cmds["INVITE"] = &command::invite;
     // _cmds["WHO"] = &command::who;s
     // _cmds["WHOIS"] = &command::whois;
     // _cmds["WHOWAS"] = &command::whowas;
-
-    _cmds["MYEXIT"] = &command::myExit;
 }
 
-void command::exec(const std::string &client_data) {
+void command::exec(const std::string &client_data) 
+{
+    // _cmds est un map qui associe une commande à une fonction
     std::stringstream iss(client_data);
     std::string buff;
-    iss >> buff;
-    std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff);
+    iss >> buff; //recupere le 1er mot de la cmd (JOIN etc)
+    std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff); // recherche si la command existe
     if (it != _cmds.end()) 
     {
         (this->*(it->second))(client_data); // Appelle la fonction associée
@@ -342,15 +267,26 @@ void command::exec(const std::string &client_data) {
     else 
     {
         std::vector<client*>& Client_tmp = _server.getClientList();
-        if (Client_tmp[_server.getIterator() -1]->getRegistered() == false)
+        size_t iterator = _server.getIterator() - 1;
+        if (Client_tmp[iterator]->getRegistered() == false)
         {
             std::string message = "Command not found during connection PASS/NICK/USER\nClient Disconnected\n";
             std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
             send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
             exec("QUIT");
+            return ;
         }
         std::string message = "Command not found\n";
         std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
         send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
     }
+}
+
+void command::sendIt(std::string def, int fdClient)
+{
+    def += "\r\n";
+    def.insert(0, ":" + _server.getServerName() + " ");
+
+    send(fdClient, def.c_str(), def.size(), 0);
+
 }
