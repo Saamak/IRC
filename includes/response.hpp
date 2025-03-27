@@ -14,5 +14,6 @@
 # define RPL_INVITING(input, nick, chan)			"341 " + input + " " + nick + " " + chan
 # define RPL_NAMREPLY(input, chan, nicks)			"353 " + input + " = " + chan + " :" + nicks
 # define RPL_ENDOFNAMES(input, chan)				"366 " + input + " " + chan + " :End of /NAMES list"
+# define RPL_KICKCHAN(input, target, chan)			"404 " + input + " " + target + " " + chan + " :You have been kicked from the channel"
 
 #endif

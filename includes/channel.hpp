@@ -38,6 +38,7 @@ class channel{
         void setIsInvitOnly(bool value);
         void setOpTopic(bool value);
         void setIsPasswd(bool value);
+        void    removeUser(const std::string &nickname);
 
 };
 

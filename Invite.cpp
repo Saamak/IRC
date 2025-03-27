@@ -76,24 +76,27 @@ void    command::invite(const std::string &client_data)
 				int target_fd = -1;
 				bool targetExists = false;
 				
-				for (size_t j = 0; j < Client_tmp.size(); j++) {
-					if (Client_tmp[j]->getNickname() == targetNickname) {
+				for (size_t j = 0; j < Client_tmp.size(); j++) 
+				{
+					if (Client_tmp[j]->getNickname() == targetNickname) 
+					{
 						targetExists = true;
 						target_fd = pollfd_tmp[j + 1].fd;
 						break;
 					}
 				}
 				
-				if (targetExists) {
+				if (targetExists) 
+				{
 					// Envoyer l'invitation
 					std::string inviteMessage = ":" + senderNickname + " INVITE " + targetNickname + " " + channelName + "\r\n";
 					send(target_fd, inviteMessage.c_str(), inviteMessage.size(), 0);
 					
 					// Confirmer à l'expéditeur
 					sendIt(RPL_INVITING(senderNickname, targetNickname, channelName), sender_fd);
-				} else {
+				} 
+				else 
 					sendIt(ERR_NOSUCHNICK(senderNickname, targetNickname), sender_fd);
-				}
 				break;
 			}
 		}

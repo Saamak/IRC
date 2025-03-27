@@ -13,6 +13,7 @@ SRC = main.cpp \
 	  Pass.cpp \
 	  PrivateMessage.cpp \
 	  Invite.cpp \
+	  Kick.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 

@@ -246,7 +246,7 @@ command::command(Server& server) : _server(server)
     _cmds["QUIT"] = &command::quit;
     _cmds["TOPIC"] = &command::topic;
     _cmds["MODE"] = &command::mode;
-    // _cmds["KICK"] = &command::kick;
+    _cmds["KICK"] = &command::kick;
     _cmds["INVITE"] = &command::invite;
     // _cmds["WHO"] = &command::who;s
     // _cmds["WHOIS"] = &command::whois;
