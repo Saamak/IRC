@@ -13,7 +13,7 @@
 #include "includes/colors.h"
 #include "includes/command.hpp"
 #include "includes/channel.hpp"
-#include "IrcException.hpp"
+#include "includes/IrcException.hpp"
 #include "includes/config.hpp"
 #include "includes/client.hpp"
 #include <iostream>

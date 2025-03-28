@@ -14,7 +14,7 @@
 #include "includes/command.hpp"
 #include "includes/channel.hpp"
 #include "includes/config.hpp"
-#include "IrcException.hpp"
+#include "includes/IrcException.hpp"
 #include "includes/client.hpp"
 #include <iostream>
 #include <sstream>

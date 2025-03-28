@@ -17,86 +17,135 @@
 #include "includes/channel.hpp"
 #include "includes/config.hpp"
 #include "includes/client.hpp"
+#include "includes/IrcException.hpp"
 #include <cstdlib> 
 #include <utility>
 
-void command::mode(const std::string &client_data) 
+// MODE - Changer le mode du channel :
+// — i : Définir/supprimer le canal sur invitation uniquement
+// — t : Définir/supprimer les restrictions de la commande TOPIC pour les opérateurs de canaux
+// — k : Définir/supprimer la clé du canal (mot de passe) ------------------------------------  [GOOD]
+// — o : Donner/retirer le privilège de l’opérateur de canal
+// — l : Définir/supprimer la limite d’utilisateurs pour le canal
+
+// Mode i (Invitation uniquement)
+// +i : Rend le canal accessible uniquement sur invitation, les utilisateurs ne peuvent rejoindre que s'ils sont explicitement invités
+// -i : Supprime la restriction d'invitation, permettant à quiconque de rejoindre
+// Mode t (Restrictions de sujet)
+// +t : Seuls les opérateurs de canal peuvent changer le sujet
+// -t : N'importe quel membre du canal peut changer le sujet
+// Mode k (Clé/mot de passe du canal)
+// +k [mot de passe] : Définit un mot de passe requis pour rejoindre le canal
+// -k : Supprime l'exigence de mot de passe
+// Mode o (Statut d'opérateur)
+// +o [pseudo] : Accorde les privilèges d'opérateur à l'utilisateur spécifié
+// -o [pseudo] : Retire les privilèges d'opérateur de l'utilisateur spécifié
+// Mode l (Limite d'utilisateurs)
+// +l [nombre] : Définit un nombre maximum d'utilisateurs autorisés dans le canal
+// -l : Supprime la limite d'utilisateurs
+
+//void	command::minusSignMode()
+
+void	command::addModeK(std::string channel_name, std::string password)
 {
-    std::cout << "[DEBUG] Received client_data: " << client_data << std::endl;
+	for (size_t x = 0; x < _server.getChannelsList().size(); x++)
+	{
+		if (_server.getChannelsList()[x]->getName() == channel_name)
+		{
+			_server.getChannelsList()[x]->setChannelFlag("+k");
+			_server.getChannelsList()[x]->setTopic(password);
+			return;
+		}
+	}
+}
 
-    std::istringstream iss(client_data);
-    std::string command;
-    std::string channel_name;
-    std::string flag;
-    std::string password;
+void command::minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd)
+{
+	for (size_t x = 0; x < _server.getChannelsList().size(); x++)
+	{
+		if (_server.getChannelsList()[x]->getName() == channel_name)
+		{
+			if (mode == "k")
+			{
+				_server.getChannelsList()[x]->setChannelFlag("-k");
+				sendIt("Password removed for channel " + channel_name, sender_fd);
+				return;
+			}
+				else
+					sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);
 
-    iss >> command;
-    iss >> channel_name;
-    iss >> flag;
-    iss >> password; // Récupère le mot de passe si fourni
+		}
+	}
+	sendIt(ERR_NOSUCHCHANNEL(senderNickname, channel_name), sender_fd);
+}
 
-    std::cout << "[DEBUG] Parsed command: " << command << ", channel_name: " << channel_name 
-              << ", flag: " << flag << ", password: " << password << std::endl;
+void	command::plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string password)
+{
+	{
+		for (size_t x = 0; x < _server.getChannelsList().size(); x++)
+		{
+			if (_server.getChannelsList()[x]->getName() == channel_name)
+			{
+				if (mode == "k")
+				{
+					if (password.empty())
+					{
+						sendIt(ERR_NEEDMOREPARAMS(senderNickname, "MODE"), sender_fd);
+						return;
+					}
+					addModeK(channel_name, password);
+					sendIt("Password set for channel " + channel_name + ": " + password, sender_fd);
+					return;
+				}
+				else
+					sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);
+			}
+		}
+		sendIt(ERR_NOSUCHCHANNEL(senderNickname, channel_name), sender_fd);
+	}
+}
 
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    size_t iterator = _server.getIterator() - 1;
-    std::string nickname = Client_tmp[iterator]->getNickname();
-    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-    int fd = pollfd_tmp[_server.getIterator()].fd;
+void command::mode(const std::string &client_data)
+{
+	std::istringstream iss(client_data);
+	std::string command, channel_name, flag, password;
 
-    std::cout << "[DEBUG] Client nickname: " << nickname << ", fd: " << fd << std::endl;
+	iss >> command >> channel_name >> flag >> password;
+	std::string senderNickname = getSenderNickname();
+	int sender_fd = getSenderFd();
 
-    if (channel_name.empty() && flag.empty())
-    {
-        std::cout << "[DEBUG] Missing parameters: channel_name or flag is empty." << std::endl;
-        sendIt(ERR_NEEDMOREPARAMS(nickname, command), fd);
-        return;
-    }
-    if (channel_name[0] != '#')
-    {
-        std::cout << "[DEBUG] Invalid channel name: " << channel_name << std::endl;
-        sendIt(ERR_NOSUCHNICK(nickname, channel_name), fd);
-        return;
-    }
+	try
+	{
+		if (channel_name.empty())
+			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
+		if (channel_name[0] != '#')
+			throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
 
-    std::vector<channel*>& Channel_tmp = _server.getChannelsList();
-    std::cout << "[DEBUG] Number of channels: " << Channel_tmp.size() << std::endl;
+		if (flag.empty())
+		{
+			channel* targetChannel = getChannel(channel_name);
+			if (!targetChannel)
+				throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
+			std::string currentModes = "Modes actuels du canal " + channel_name;
+			sendIt(currentModes, sender_fd);
+			return;
+		}
 
-    for (size_t x = 0; x < Channel_tmp.size(); x++)
-    {
-        std::cout << "[DEBUG] Checking channel: " << Channel_tmp[x]->getName() << std::endl;
+		std::string sign = flag.substr(0, 1);
+		if (sign != "+" && sign != "-")
+			throw IrcException("ERR_UNKNOWNMODE", ERR_UNKNOWNMODE(senderNickname, sign));
+			
+		std::string mode = flag.substr(1, 1);
+		if (mode.empty())
+			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
 
-        if (Channel_tmp[x]->getName() == channel_name) 
-        {
-            std::cout << "[DEBUG] Found channel: " << channel_name << std::endl;
-
-            if (flag == "+k") // Vérifie si le mode +k est activé
-            {
-                std::cout << "[DEBUG] Mode +k detected." << std::endl;
-
-                if (password.empty())
-                {
-                    std::cout << "[DEBUG] Missing password for +k mode." << std::endl;
-                    sendIt(ERR_NEEDMOREPARAMS(nickname, command), fd);
-                    return;
-                }
-
-                Channel_tmp[x]->setChannelFlag(flag); // Active le mode +k
-                Channel_tmp[x]->setTopic(password);   // Définit le mot de passe comme "topic" (ou utilisez une méthode dédiée si disponible)
-                std::cout << "[DEBUG] Password set for channel " << channel_name << ": " << password << std::endl;
-
-                P << B_G << "Password set for channel " << channel_name << ": " << password << RESET << E;
-                sendIt("Password set for channel " + channel_name, fd);
-            }
-            else
-            {
-                std::cout << "[DEBUG] Setting channel flag: " << flag << std::endl;
-                Channel_tmp[x]->setChannelFlag(flag);
-            }
-            return;
-        }
-    }
-
-    std::cout << "[DEBUG] Channel not found: " << channel_name << std::endl;
-    sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
+		if (sign == "+")
+			plusSignMode(channel_name, mode, senderNickname, sender_fd, password);
+		else
+			minusSignMode(channel_name, mode, senderNickname, sender_fd);
+	}
+	catch (const IrcException& e)
+	{
+		sendIt(e.getErrorMsg(), sender_fd);
+	}
 }
