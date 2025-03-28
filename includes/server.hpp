@@ -61,7 +61,9 @@ public:
     void setNewClient(client* client);
     std::string getPassword();
     std::string getServerName();
-
+    bool clientExists(const std::string &nickname) const;
+    client* getClientByNickname(const std::string &nickname) const;
+    int getClientFd(const std::string &nickname) const;
 };
 
 #endif // SERVER_HPP

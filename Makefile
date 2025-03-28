@@ -11,9 +11,10 @@ SRC = main.cpp \
 	  User.cpp \
 	  Nick.cpp \
 	  Pass.cpp \
-	  PrivateMessage.cpp \
+	  PrivMsg.cpp \
 	  Invite.cpp \
 	  Kick.cpp \
+	  Topic.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
