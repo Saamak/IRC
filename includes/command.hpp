@@ -37,7 +37,6 @@ public:
 	void    topic(const std::string &client_data);
 	void    mode(const std::string &client_data);
 	void    plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string password);
-	void	addModeK(std::string channel_name, std::string password);
 	void    minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd);
 	void    kick(const std::string &client_data);
 	// void invite();

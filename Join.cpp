@@ -72,7 +72,7 @@ void command::join(const std::string &client_data)
 
             // Vérifie si le canal est protégé par un mot de passe
             if (Channel_tmp[x]->getIsPasswd()) {
-                std::string channel_password = Channel_tmp[x]->getTopic(); // Utilisez le topic comme mot de passe
+                std::string channel_password = Channel_tmp[x]->getKey(); // Utilisez le topic comme mot de passe
                 std::cout << "[DEBUG] Channel is password-protected. Expected: '" 
                           << channel_password << "', Received: '" << password << "'" << std::endl;
                 

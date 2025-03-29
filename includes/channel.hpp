@@ -18,16 +18,24 @@ class channel{
         size_t maxUser;
         std::vector<client*> client_lst;
         std::vector<client*> operator_lst;
+
     public :
         channel(std::string name);
         ~channel();
+
+        //UTILS
         void    addClient(client* newClient);
         bool    IsInChannel(const std::string &name);
-        bool    IsOperator(const std::string &name);
         bool    ClientExist(const std::string &name);
-        void    addOperator(client * newOperator);
+        void    removeUser(const std::string &nickname);
         std::vector<client*> getClients() const;
-        void    setChannelFlag(std::string flag);
+
+        //Operator
+        bool    IsOperator(const std::string &name);
+        void    addOperator(client * newOperator);
+       void     removeOperator(client *noOperator);
+
+
 
 
         //SETTER GETTER
@@ -40,7 +48,8 @@ class channel{
         void setIsInvitOnly(bool value);
         void setOpTopic(bool value);
         void setIsPasswd(bool value);
-        void    removeUser(const std::string &nickname);
+        void setKey(std::string keyValue);
+        std::string getKey();
 
 };
 

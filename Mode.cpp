@@ -46,104 +46,56 @@
 
 //void	command::minusSignMode()
 
-void	command::addModeK(std::string channel_name, std::string password)
-{
-	for (size_t x = 0; x < _server.getChannelsList().size(); x++)
-	{
-		if (_server.getChannelsList()[x]->getName() == channel_name)
-		{
-			_server.getChannelsList()[x]->setChannelFlag("+k");
-			_server.getChannelsList()[x]->setTopic(password);
-			return;
-		}
-	}
-}
-
-void command::minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd)
-{
-	for (size_t x = 0; x < _server.getChannelsList().size(); x++)
-	{
-		if (_server.getChannelsList()[x]->getName() == channel_name)
-		{
-			if (mode == "k")
-			{
-				_server.getChannelsList()[x]->setChannelFlag("-k");
-				sendIt("Password removed for channel " + channel_name, sender_fd);
-				return;
-			}
-				else
-					sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);
-
-		}
-	}
-	sendIt(ERR_NOSUCHCHANNEL(senderNickname, channel_name), sender_fd);
-}
-
-void	command::plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string password)
-{
-	{
-		for (size_t x = 0; x < _server.getChannelsList().size(); x++)
-		{
-			if (_server.getChannelsList()[x]->getName() == channel_name)
-			{
-				if (mode == "k")
-				{
-					if (password.empty())
-					{
-						sendIt(ERR_NEEDMOREPARAMS(senderNickname, "MODE"), sender_fd);
-						return;
-					}
-					addModeK(channel_name, password);
-					sendIt("Password set for channel " + channel_name + ": " + password, sender_fd);
-					return;
-				}
-				else
-					sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);
-			}
-		}
-		sendIt(ERR_NOSUCHCHANNEL(senderNickname, channel_name), sender_fd);
-	}
-}
 
 void command::mode(const std::string &client_data)
 {
-	std::istringstream iss(client_data);
-	std::string command, channel_name, flag, password;
+    std::istringstream iss(client_data);
+    std::string command, channel_name, flag, password;
 
-	iss >> command >> channel_name >> flag >> password;
-	std::string senderNickname = getSenderNickname();
-	int sender_fd = getSenderFd();
+    iss >> command >> channel_name >> flag >> password;
+    std::string senderNickname = getSenderNickname();
+    int sender_fd = getSenderFd();
 
-	try
-	{
-		if (channel_name.empty())
-			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
-		if (channel_name[0] != '#')
-			throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
+try
+{
+    if (channel_name.empty())
+        throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
+    if (channel_name[0] != '#')
+        throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
 
-		if (flag.empty())
-		{
-			channel* targetChannel = getChannel(channel_name);
-			if (!targetChannel)
-				throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
-			std::string currentModes = "Modes actuels du canal " + channel_name;
-			sendIt(currentModes, sender_fd);
-			return;
-		}
+    channel* targetChannel = getChannel(channel_name);
+    if (!targetChannel)
+        throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
 
-		std::string sign = flag.substr(0, 1);
-		if (sign != "+" && sign != "-")
-			throw IrcException("ERR_UNKNOWNMODE", ERR_UNKNOWNMODE(senderNickname, sign));
-			
-		std::string mode = flag.substr(1, 1);
-		if (mode.empty())
-			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
+    if (flag.empty())
+    {
+        std::string currentModes = "Modes actuels du canal " + channel_name; // RPL_CHANNELMODEIS
+        sendIt(currentModes, sender_fd);
+        return;
+    }
 
-		if (sign == "+")
-			plusSignMode(channel_name, mode, senderNickname, sender_fd, password);
-		else
-			minusSignMode(channel_name, mode, senderNickname, sender_fd);
-	}
+    // Vérifiez si l'utilisateur est un opérateur
+    if (!targetChannel->IsOperator(senderNickname))
+        throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channel_name));
+
+    // analyser les paramètres
+    std::vector<std::pair<std::string, std::string> > arguments = parsing_param_mode(client_data);
+
+    // Parcourir les arguments analysés
+    for (size_t i = 0; i < arguments.size(); ++i)
+    {
+        std::string sign = arguments[i].first;
+        std::string mode = arguments[i].second;
+		std::cout << "Processing mode: " << mode << " with sign: " << sign << std::endl;
+
+        if (sign == "+")
+            plusSignMode(channel_name, mode, senderNickname, sender_fd, password);
+        else if (sign == "-")
+            minusSignMode(channel_name, mode, senderNickname, sender_fd);
+        else
+            throw IrcException("ERR_UNKNOWNMODE", ERR_UNKNOWNMODE(senderNickname, sign));
+    }
+}
 	catch (const IrcException& e)
 	{
 		sendIt(e.getErrorMsg(), sender_fd);

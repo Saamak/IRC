@@ -15,6 +15,8 @@ SRC = main.cpp \
 	  Invite.cpp \
 	  Kick.cpp \
 	  Topic.cpp \
+	  ModeSignMinus.cpp \
+	  ModeSignPlus.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
