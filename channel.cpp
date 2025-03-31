@@ -1,5 +1,16 @@
 #include "includes/channel.hpp"
 
+void channel::removeInvite(const std::string& nickname) {
+	invite_list.erase(std::remove(invite_list.begin(), invite_list.end(), nickname), invite_list.end());
+}
+
+void channel::addInvite(const std::string& nickname) {
+	invite_list.push_back(nickname);
+}
+
+bool channel::isInvited(const std::string& nickname) {
+	return std::find(invite_list.begin(), invite_list.end(), nickname) != invite_list.end();
+}
 
 void channel::addClient(client* newClient)
 {
@@ -37,7 +48,6 @@ bool    channel::ClientExist(const std::string &name)
 	return false;
 }
 
-
 channel::channel(std::string name): _name(name)
 {
 	P << "channel constructor" << E;
@@ -47,20 +57,20 @@ channel::channel(std::string name): _name(name)
 	maxUser = std::numeric_limits<size_t>::max();
 }
 
-channel::~channel() { P << "destructor channel" << E; }
-
 void channel::addOperator(client * newOperator) { operator_lst.push_back(newOperator); }
 
 void channel::removeOperator(client *noOperator) {
-    for (std::vector<client*>::iterator it = operator_lst.begin(); it != operator_lst.end(); ++it) {
-        if (*it == noOperator) {
-            operator_lst.erase(it); // Supprime l'opérateur de la liste
-            std::cout << "Operator removed: " << noOperator->getNickname() << std::endl;
-            return;
-        }
-    }
-    std::cout << "Operator not found: " << noOperator->getNickname() << std::endl;
+	for (std::vector<client*>::iterator it = operator_lst.begin(); it != operator_lst.end(); ++it) {
+		if (*it == noOperator) {
+			operator_lst.erase(it); // Supprime l'opérateur de la liste
+			std::cout << "Operator removed: " << noOperator->getNickname() << std::endl;
+			return;
+		}
+	}
+	std::cout << "Operator not found: " << noOperator->getNickname() << std::endl;
 }
+
+channel::~channel() { P << "destructor channel" << E; }
 
 std::vector<client*> channel::getClients() const {return (client_lst);}
 

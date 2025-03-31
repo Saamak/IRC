@@ -64,17 +64,17 @@ void command::join(const std::string &client_data)
             std::cout << "[DEBUG] Channel exists: " << channel_name << std::endl;
             
              // 5a. Vérifie les restrictions (invite-only, mot de passe)
-            if (Channel_tmp[x]->getIsInvitOnly()) {
+            if (Channel_tmp[x]->getIsInvitOnly() && !Channel_tmp[x]->isInvited(nickname)) {
                 std::cout << "[DEBUG] Channel is invite-only: " << channel_name << std::endl;
                 sendIt(ERR_INVITEONLYCHAN(nickname, channel_name), fd);
                 return;
             }
-
+            
             // Vérifie si le canal est protégé par un mot de passe
             if (Channel_tmp[x]->getIsPasswd()) {
                 std::string channel_password = Channel_tmp[x]->getKey(); // Utilisez le topic comme mot de passe
                 std::cout << "[DEBUG] Channel is password-protected. Expected: '" 
-                          << channel_password << "', Received: '" << password << "'" << std::endl;
+                << channel_password << "', Received: '" << password << "'" << std::endl;
                 
                 if (password.empty() || channel_password != password) {
                     std::cout << "[DEBUG] Incorrect or missing password for channel: " << channel_name << std::endl;
@@ -84,7 +84,7 @@ void command::join(const std::string &client_data)
                     std::cout << "[DEBUG] Password accepted for channel: " << channel_name << std::endl;
                 }
             }
-
+            
             if (!Channel_tmp[x]->IsInChannel(nickname)) 
             {
                 std::cout << "[DEBUG] Adding client to existing channel: " << channel_name << std::endl;
@@ -108,6 +108,7 @@ void command::join(const std::string &client_data)
                     if (i > 0) users_list += " ";
                     users_list += channel_clients[i]->getNickname();
                 }
+                //retirer de la liste d invite
                 
                 // AJOUT: Envoyer RPL_NAMREPLY (liste des utilisateurs)
                 sendIt(RPL_NAMREPLY(nickname, channel_name, users_list), fd);

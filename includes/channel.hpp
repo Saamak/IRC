@@ -5,6 +5,7 @@
 #include "client.hpp"
 #include <limits>
 #include "colors.h"
+#include <algorithm>
 
 
 class channel{
@@ -18,6 +19,7 @@ class channel{
         size_t maxUser;
         std::vector<client*> client_lst;
         std::vector<client*> operator_lst;
+        std::vector<std::string> invite_list;
 
     public :
         channel(std::string name);
@@ -35,7 +37,9 @@ class channel{
         void    addOperator(client * newOperator);
        void     removeOperator(client *noOperator);
 
-
+       void addInvite(const std::string& nickname);
+       bool isInvited(const std::string& nickname);
+       void removeInvite(const std::string& nickname);
 
 
         //SETTER GETTER
