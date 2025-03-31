@@ -31,19 +31,32 @@ void command::nick(const std::string &client_data) {
     std::string command;
     std::string nickname;
     iss >> command;
-    iss >> nickname;
-    P << nickname << E;
-    if (nickname.empty()) {
+    iss >> nickname; // Usage: NICK <nickname>, sets your nick6
+    if (nickname.empty() && !Client_tmp[iterator]->getRegistered()) 
+    {
         sendIt(ERR_NEEDMOREPARAMS(Client_tmp[iterator]->getNickname(), command), fd);
         exec("QUIT");
         return;
     }
-    if(Client_tmp[iterator]->getRegistered())
+
+    if(Client_tmp[iterator]->getRegistered() && !nickname.empty())
     {
-        //CHECK SI CE NICK EST DEJA REGISTERED SUR LE SERV, SI OUI , REFUSER LE NOUVEAU NICK, DONC LAISSER L'ACTUEl
         Client_tmp[iterator]->setNickname(nickname);
         std::string message = "You are now known as " + nickname + "\n";
         send(fd, message.c_str(), message.size(), 0);
+        std::vector<channel*> channels_tmp = _server.getChannelsList();
+        for (size_t i = 0; i < channels_tmp.size(); i++) 
+        {
+            std::vector<client*> clients_in_channels = channels_tmp[i]->getClients(); // Fixed here
+            for(size_t x = 0; x < clients_in_channels.size(); x++)
+            {
+                if(clients_in_channels[x]->getNickname() == Client_tmp[iterator]->getNickname())
+                {
+                    P << "client trouvee dans un channel" << E;
+                    sendIt(RPL_NICK())
+                }
+            }
+        }
         return ;
     }
     if(Client_tmp[iterator]->getPassCheck() && Client_tmp[iterator]->getUserCheck() == false && Client_tmp[iterator]->getNickCheck() == false)
@@ -60,3 +73,7 @@ void command::nick(const std::string &client_data) {
         return ;
     }
 }
+
+//RPL_NICK
+
+
