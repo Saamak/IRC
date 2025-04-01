@@ -12,9 +12,9 @@
 # define RPL_NOTOPIC(input, chan)					"331 " + input + " " + chan + " :No topic is set"
 # define RPL_TOPIC(input, chan, topic)				"332 " + input + " " + chan + " :" + topic
 # define RPL_INVITING(input, nick, chan)			"341 " + input + " " + nick + " " + chan
-# define RPL_NAMREPLY(input, chan, nicks)			"353 " + input + " = " + chan + " :" + nicks
+# define RPL_NAMREPLY(input, chan, users)			"353 " + input + " = " + chan + " :" + users
 # define RPL_ENDOFNAMES(input, chan)				"366 " + input + " " + chan + " :End of /NAMES list"
 # define RPL_KICKCHAN(input, target, chan)			"404 " + input + " " + target + " " + chan + " :You have been kicked from the channel"
-# define RPL_NICK()
+# define RPL_NICK(oldNickname, nickname)            ":" + oldNickname + " NICK " + nickname + "\r\n"
 
 #endif

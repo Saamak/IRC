@@ -69,8 +69,11 @@ try
 
     if (flag.empty())
     {
-        std::string currentModes = "Modes actuels du canal " + channel_name; // RPL_CHANNELMODEIS
-        sendIt(currentModes, sender_fd);
+        std::string modeStr = targetChannel->getModes();
+        if (targetChannel->getIsPasswd())
+            modeStr += " " + targetChannel->getKey();
+    
+        sendIt(RPL_CHANNELMODEIS(senderNickname, channel_name, modeStr), sender_fd);
         return;
     }
 
