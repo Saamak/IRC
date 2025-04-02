@@ -43,45 +43,132 @@ void channel::removeUser(const std::string &nickname)
 
 void command::kick(const std::string &client_data)
 {
-	std::istringstream iss(client_data);
-	std::string command, targetNickname, channelName;
-	
-	iss >> command >> channelName >> targetNickname;
-	std::string senderNickname = getSenderNickname();
-	int sender_fd = getSenderFd();
+    std::string senderNickname = getSenderNickname();
+    int sender_fd = getSenderFd();
 
-	try 
-	{
-		if (channelName[0] != '#' || targetNickname.empty() || channelName.empty())
-			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "KICK"));
-		if (!_server.clientExists(targetNickname))
-			throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, targetNickname));
-		
-		channel* targetChannel = getChannel(channelName);
-		if (!targetChannel)
-			throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channelName));
-		if (!targetChannel->IsInChannel(senderNickname))
-			throw IrcException("ERR_NOTONCHANNEL", ERR_NOTONCHANNEL(senderNickname, channelName));
-		if (!targetChannel->IsInChannel(targetNickname))
-			throw IrcException("ERR_USERNOTINCHANNEL", ERR_USERNOTINCHANNEL(senderNickname, targetNickname, channelName));
-		if (!targetChannel->IsOperator(senderNickname))
-		    throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channelName));
-		
-		int target_fd = _server.getClientFd(targetNickname);
-		std::string kickMessage = ":" + senderNickname + " KICK " + targetNickname + " " + channelName+ " :You have been kicked\r\n";
-		send(target_fd, kickMessage.c_str(), kickMessage.size(), 0);
-		
-		targetChannel->removeUser(targetNickname);
-		
-		std::string channelNotice = ":" + senderNickname + " KICK " + channelName + " " + targetNickname + " :Kicked by " + senderNickname + "\r\n";
-		std::vector<client*> channelClients = targetChannel->getClients();
-		for (size_t i = 0; i < channelClients.size(); i++)
-		{
-			int client_fd = _server.getClientFd(channelClients[i]->getNickname());
-			send(client_fd, channelNotice.c_str(), channelNotice.size(), 0);
-		}
-	}
-	catch (const IrcException& e) {
-		sendIt(e.getErrorMsg(), sender_fd);
-	}
+    try 
+    {
+        // Parse the basic command components
+        std::istringstream iss(client_data);
+        std::string command, channelName, targetNickname;
+        
+        iss >> command >> channelName >> targetNickname;
+        
+        // Extract optional comment using proper IRC protocol handling
+        std::string comment = "Kicked from channel"; // Default comment
+        
+        // Find comment part (after ":" that follows the nickname)
+        size_t colonPos = client_data.find(':', client_data.find(targetNickname));
+        if (colonPos != std::string::npos) {
+            comment = client_data.substr(colonPos + 1);
+        }
+        
+        // Validate parameters and check permissions
+        if (channelName[0] != '#' || targetNickname.empty() || channelName.empty())
+            throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "KICK"));
+        if (!_server.clientExists(targetNickname))
+            throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, targetNickname));
+        
+        channel* targetChannel = getChannel(channelName);
+        if (!targetChannel)
+            throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channelName));
+        if (!targetChannel->IsInChannel(senderNickname))
+            throw IrcException("ERR_NOTONCHANNEL", ERR_NOTONCHANNEL(senderNickname, channelName));
+        if (!targetChannel->IsInChannel(targetNickname))
+            throw IrcException("ERR_USERNOTINCHANNEL", ERR_USERNOTINCHANNEL(senderNickname, targetNickname, channelName));
+        if (!targetChannel->IsOperator(senderNickname))
+            throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channelName));
+        
+        // Remove user from channel
+        targetChannel->removeUser(targetNickname);
+        
+        // Format the kick message correctly according to IRC protocol
+        std::string kickMessage = ":" + senderNickname + " KICK " + channelName + " " + targetNickname + " :" + comment + "\r\n";
+        
+        // Notify the kicked user
+        int target_fd = _server.getClientFd(targetNickname);
+        send(target_fd, kickMessage.c_str(), kickMessage.size(), 0);
+        
+        // Notify all other users in the channel
+        std::vector<client*> channelClients = targetChannel->getClients();
+        for (size_t i = 0; i < channelClients.size(); i++)
+        {
+            int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+            send(client_fd, kickMessage.c_str(), kickMessage.size(), 0);
+        }
+    }
+    catch (const IrcException& e) {
+        sendIt(e.getErrorMsg(), sender_fd);
+    }
 }
+
+// void command::kick(const std::string &client_data)
+// {
+//     std::string senderNickname = getSenderNickname();
+//     int sender_fd = getSenderFd();
+
+//     try 
+//     {
+//         // Parse the command components
+//         std::istringstream iss(client_data);
+//         std::string command, channelName, targetNickname;
+        
+//         iss >> command >> channelName >> targetNickname;
+        
+//         // Extract optional comment (everything after the nickname)
+//         std::string comment;
+//         size_t pos = client_data.find(targetNickname);
+//         if (pos != std::string::npos)
+//         {
+//             pos += targetNickname.length();
+//             // Find the first non-space character after the nickname
+//             pos = client_data.find_first_not_of(" \t", pos);
+//             if (pos != std::string::npos)
+//             {
+//                 // Check if there's a colon prefix for the comment
+//                 if (client_data[pos] == ':')
+//                     pos++;
+//                 comment = client_data.substr(pos);
+//             }
+//         }
+        
+//         // Default comment if none provided
+//         if (comment.empty())
+//             comment = "Kicked from channel";
+
+//         // Validate parameters and check permissions
+//         if (channelName[0] != '#' || targetNickname.empty() || channelName.empty())
+//             throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "KICK"));
+//         if (!_server.clientExists(targetNickname))
+//             throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, targetNickname));
+        
+//         channel* targetChannel = getChannel(channelName);
+//         if (!targetChannel)
+//             throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channelName));
+//         if (!targetChannel->IsInChannel(senderNickname))
+//             throw IrcException("ERR_NOTONCHANNEL", ERR_NOTONCHANNEL(senderNickname, channelName));
+//         if (!targetChannel->IsInChannel(targetNickname))
+//             throw IrcException("ERR_USERNOTINCHANNEL", ERR_USERNOTINCHANNEL(senderNickname, targetNickname, channelName));
+//         if (!targetChannel->IsOperator(senderNickname))
+//             throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channelName));
+        
+//         // Remove user from channel
+//         targetChannel->removeUser(targetNickname);
+        
+//         // Notify the kicked user
+//         std::string kickMessage = ":" + senderNickname + " KICK " + channelName + " " + targetNickname + " :" + comment + "\r\n";
+//         int target_fd = _server.getClientFd(targetNickname);
+//         send(target_fd, kickMessage.c_str(), kickMessage.size(), 0);
+        
+//         // Notify all other users in the channel
+//         std::vector<client*> channelClients = targetChannel->getClients();
+//         for (size_t i = 0; i < channelClients.size(); i++)
+//         {
+//             int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+//             send(client_fd, kickMessage.c_str(), kickMessage.size(), 0);
+//         }
+//     }
+//     catch (const IrcException& e) {
+//         sendIt(e.getErrorMsg(), sender_fd);
+//     }
+// }

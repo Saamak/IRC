@@ -112,30 +112,73 @@ std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(con
 	//std::vector<std::pair<std::string,std::string> > Arg;
 }
 
-void command::quit(const std::string &client_data) {
+// void command::quit(const std::string &client_data) 
+// {
+// 	(void)client_data;
+// 	std::vector<client*>& Client_tmp = _server.getClientList();
+// 	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+// 	size_t iterator = _server.getIterator();
+	
+// 	if (iterator < 1 || iterator > Client_tmp.size()) {
+// 		P << " invalid iterator: " << iterator << E;
+// 		return;
+// 	}
+	
+// 	// Supprimer le client de manière sécurisée
+// 	client* client_to_remove = Client_tmp[iterator - 1];
+// 	if (client_to_remove) {
+// 		P << "Removing client: " << client_to_remove->getNickname() << E;
+// 		delete client_to_remove;
+// 		Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
+// 		close(pollfd_tmp[iterator].fd); // Mettre le pointeur à NULL
+// 		pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
+// 	} else {
+// 		P << "Client pointer is null, skipping removal" << E;
+// 	}
+// }
+
+void command::quit(const std::string &client_data) 
+{
 	(void)client_data;
 	std::vector<client*>& Client_tmp = _server.getClientList();
 	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
 	size_t iterator = _server.getIterator();
 	
-	if (iterator < 1 || iterator > Client_tmp.size()) {
-		P << " invalid iterator: " << iterator << E;
+	if (iterator < 1 || iterator > Client_tmp.size()) 
+	{
+		P << "Invalid iterator: " << iterator << E;
+		return;
+	}
+	
+	size_t index = iterator - 1;
+	if (index >= Client_tmp.size()) {
+		P << "Invalid client index: " << index << E;
 		return;
 	}
 	
 	// Supprimer le client de manière sécurisée
-	client* client_to_remove = Client_tmp[iterator - 1];
-	if (client_to_remove) {
+	client* client_to_remove = Client_tmp[index];
+	if (client_to_remove) 
+	{
+		// Notifier les canaux avant la suppression
+		std::vector<channel*>& channels = _server.getChannelsList();
+		for (size_t i = 0; i < channels.size(); ++i) 
+		{
+			if (channels[i]->IsInChannel(client_to_remove->getNickname())) 
+				channels[i]->removeUser(client_to_remove->getNickname());
+		}
+		
 		P << "Removing client: " << client_to_remove->getNickname() << E;
 		delete client_to_remove;
-		Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
-		close(pollfd_tmp[iterator].fd); // Mettre le pointeur à NULL
-		pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
-	} else {
-		P << "Client pointer is null, skipping removal" << E;
+		Client_tmp.erase(Client_tmp.begin() + index);
+		
+		if (iterator < pollfd_tmp.size()) 
+		{
+			close(pollfd_tmp[iterator].fd);
+			pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
+		}
 	}
 }
-
 
 size_t command::getChanIterator(std::string channelname)
 {

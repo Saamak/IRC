@@ -121,50 +121,6 @@ void Server::clientConnected()
 	
 }
 
-int Server::HandleCommunication(int i)
-{
-	// Handle client communication
-	char buffer[1024];
-	int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
-	buffer[bytes_read] = '\0';
-	if (buffer[0] == '\0')
-	{
-		integrity("QUIT");
-		return (i);
-	}
-	std::string client_test(buffer);
-	std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
-	if (buffer_client_tmp.empty() == false)
-	{
-		client_test = buffer_client_tmp + client_test;
-	}
-	
-	if (client_test.find('\n') == (size_t)-1)
-	{
-		client_lst[iterator - 1]->setBufferClient(client_test);
-		return (i);
-	}
-	// IF \r\n detecter , lancer la commande, si /r/n non detecter , ne pas lancer la commande, stocker dans un buffer jusqu'a ce que la commande finale soit envoyee.
-	//Attention, dans la pratique peut etre faire une comparaison entre buffer + chaine recu , car le terminal renvoie a chaque fois l'integralitie de la commande.
-	// Voir exemple sujet, renvoie com, pui com man, puis com man, puis com man \r\n.
-	if (bytes_read < 0) 
-	{
-		std::string message =  "READ ERROR in client fd\nClient Disconnected\n";
-		send(_poll_fds[iterator - 1].fd, message.c_str(), message.size(), 0);
-		integrity("QUIT");
-	}
-	else
-	{
-		client_lst[iterator - 1]->emptyBufferClient();
-		std::vector<std::string> splitted = split(client_test, '\n');
-		for(size_t x = 0; x < splitted.size(); x++)
-		{
-			P << B_Y << splitted[x] << RESET << E;
-			integrity(splitted[x]);
-		}
-	}
-	return (i);
-}
 
 void handleSignal(int signal)
 {
@@ -222,6 +178,68 @@ void Server::start()
 	}
 }
 
+int Server::HandleCommunication(int i)
+{
+	char buffer[1024];
+	memset(buffer, 0, sizeof(buffer));
+	
+	int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer) - 1);
+	
+	if (bytes_read <= 0) 
+	{
+		std::cout << "Client disconnected" << std::endl;
+		integrity("QUIT");
+		return (i);
+	}
+	
+	buffer[bytes_read] = '\0';
+	std::string client_test(buffer);
+	
+	if (iterator > 0 && iterator <= client_lst.size()) 
+	{
+		std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
+		
+		if (!buffer_client_tmp.empty())
+		{
+			try 
+			{
+				client_test = buffer_client_tmp + client_test;
+			} 
+			catch (const std::exception &e) 
+			{
+				std::cerr << "String error: " << e.what() << std::endl;
+				client_lst[iterator - 1]->emptyBufferClient();
+				return (i);
+			}
+		}
+		
+		if (client_test.find('\n') == std::string::npos)
+		{
+			if (client_test.length() > 4096) 
+			{
+				client_lst[iterator - 1]->emptyBufferClient();
+				std::string message = "Error: Message too large\r\n";
+				send(_poll_fds[i].fd, message.c_str(), message.size(), 0);
+			} else 
+				client_lst[iterator - 1]->setBufferClient(client_test);
+			return (i);
+		}
+		
+		client_lst[iterator - 1]->emptyBufferClient();
+		std::vector<std::string> splitted = split(client_test, '\n');
+		for(size_t x = 0; x < splitted.size(); x++)
+		{
+			P << B_Y << splitted[x] << RESET << E;
+			integrity(splitted[x]);
+		}
+	}
+	else
+	{
+		std::cerr << "Invalid iterator value: " << iterator << std::endl;
+		return (i);
+	}
+	return (i);
+}
 
 void Server::addChannel(channel* new_channel) {
 	channels_lst.push_back(new_channel);
@@ -239,7 +257,6 @@ void Server::removeClient(client* existingClient)
 	// erase pour supprimer les éléments déplacés
 	client_lst.erase(it, client_lst.end());
 }
-
 
 void Server::printChannelsAndClients() const
 {
@@ -294,3 +311,55 @@ void Server::sendToClient(int client_fd, const std::string &message) { send(clie
 std::string Server::getPassword() {return (_password);}
 
 std::string Server::getServerName() {return (_server_name);}
+
+
+// int Server::HandleCommunication(int i)
+// {
+// 	// Handle client communication
+// 	char buffer[1024];
+// 	int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer));
+// 	if (bytes_read <= 0) 
+//     {
+//         std::cout << "Client disconnected or read error" << std::endl;
+//         integrity("QUIT");
+//         return (i);
+//     }
+// 	buffer[bytes_read] = '\0';
+// 	if (buffer[0] == '\0')
+// 	{
+// 		integrity("QUIT");
+// 		return (i);
+// 	}
+// 	std::string client_test(buffer);
+// 	std::string buffer_client_tmp = client_lst[iterator - 1]->getBufferClient();
+// 	if (buffer_client_tmp.empty() == false)
+// 	{
+// 		client_test = buffer_client_tmp + client_test;
+// 	}
+	
+// 	if (client_test.find('\n') == (size_t)-1)
+// 	{
+// 		client_lst[iterator - 1]->setBufferClient(client_test);
+// 		return (i);
+// 	}
+// 	// IF \r\n detecter , lancer la commande, si /r/n non detecter , ne pas lancer la commande, stocker dans un buffer jusqu'a ce que la commande finale soit envoyee.
+// 	//Attention, dans la pratique peut etre faire une comparaison entre buffer + chaine recu , car le terminal renvoie a chaque fois l'integralitie de la commande.
+// 	// Voir exemple sujet, renvoie com, pui com man, puis com man, puis com man \r\n.
+// 	if (bytes_read < 0) 
+// 	{
+// 		std::string message =  "READ ERROR in client fd\nClient Disconnected\n";
+// 		send(_poll_fds[iterator - 1].fd, message.c_str(), message.size(), 0);
+// 		integrity("QUIT");
+// 	}
+// 	else
+// 	{
+// 		client_lst[iterator - 1]->emptyBufferClient();
+// 		std::vector<std::string> splitted = split(client_test, '\n');
+// 		for(size_t x = 0; x < splitted.size(); x++)
+// 		{
+// 			P << B_Y << splitted[x] << RESET << E;
+// 			integrity(splitted[x]);
+// 		}
+// 	}
+// 	return (i);
+// }
