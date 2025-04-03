@@ -13,10 +13,12 @@ SRC = main.cpp \
 	  Pass.cpp \
 	  PrivMsg.cpp \
 	  Invite.cpp \
+	  Who.cpp \
 	  Kick.cpp \
 	  Topic.cpp \
 	  ModeSignMinus.cpp \
 	  ModeSignPlus.cpp
+
 
 OBJ = $(SRC:.cpp=.o)
 

@@ -43,6 +43,7 @@ class channel{
 
 
         //SETTER GETTER
+        std::string getModes() const;
         std::string getName() const;
         std::string getTopic() const;
         void setTopic(const std::string topic_name);

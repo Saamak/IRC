@@ -70,6 +70,23 @@ void channel::removeOperator(client *noOperator) {
 	std::cout << "Operator not found: " << noOperator->getNickname() << std::endl;
 }
 
+std::string channel::getModes() const 
+{
+    std::string modes = "+";
+    
+    if (isInvitOnly)
+        modes += "i";
+    if (opTopic)
+        modes += "t";
+    if (isPasswd)
+        modes += "k";
+    
+    if (modes.length() == 1)
+        return modes;
+    
+    return modes;
+}
+
 channel::~channel() { P << "destructor channel" << E; }
 
 std::vector<client*> channel::getClients() const {return (client_lst);}
