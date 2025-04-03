@@ -30,6 +30,3 @@ int main(int ac, char **av)
 	serv.start();
 	serv.myExit();
 }
-
-// Join a refaire
-// Clear list invit une fois join le channel
