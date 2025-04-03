@@ -7,6 +7,7 @@
 #include "includes/command.hpp"
 #include <algorithm> 
 #include <csignal>
+#include <fcntl.h>
 
 bool exit_b = false;
 
@@ -69,6 +70,27 @@ bool Server::init(char *pass)
 	if (_server_fd < 0)
 	{
 		std::cerr << "Error: socket creation failed" << std::endl;
+		return false;
+	}
+
+	int opt = 1;
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) 
+	{
+		std::cerr << "Error: setsockopt failed" << std::endl;
+		close(_server_fd);
+		return false;
+	}
+	
+	int flags = fcntl(_server_fd, F_GETFL, 0);
+	if (flags == -1) {
+		std::cerr << "Error: fcntl get failed" << std::endl;
+		close(_server_fd);
+		return false;
+	}
+	if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) == -1) 
+	{
+		std::cerr << "Error: fcntl set failed" << std::endl;
+		close(_server_fd);
 		return false;
 	}
 	
