@@ -164,10 +164,11 @@ void command::quit(const std::string &client_data)
 		std::vector<channel*>& channels = _server.getChannelsList();
 		for (size_t i = 0; i < channels.size(); ++i) 
 		{
-			if (channels[i]->IsInChannel(client_to_remove->getNickname())) 
+			if (channels[i]->IsInChannel(client_to_remove->getNickname()))
 				channels[i]->removeUser(client_to_remove->getNickname());
+			if (channels[i]->getNumberClient() == 0)
+				channels.erase(channels.begin() + i);
 		}
-		
 		P << "Removing client: " << client_to_remove->getNickname() << E;
 		delete client_to_remove;
 		Client_tmp.erase(Client_tmp.begin() + index);

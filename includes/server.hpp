@@ -47,6 +47,7 @@ public:
     void removeClient(client* existingClient);
     void printChannelsAndClients() const;
     void sendToClient(int client_fd, const std::string &message);
+    void removeChannel(std::vector<channel*>::iterator i);
 
     //SETTER GETTER
     int getPort() const { return _port; }

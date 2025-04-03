@@ -31,15 +31,17 @@ class channel{
         bool    ClientExist(const std::string &name);
         void    removeUser(const std::string &nickname);
         std::vector<client*> getClients() const;
+        std::vector<client*> getOperators() const;
+        std::vector<std::string> getInviteList() const;
 
         //Operator
         bool    IsOperator(const std::string &name);
         void    addOperator(client * newOperator);
-       void     removeOperator(client *noOperator);
+        void     removeOperator(client *noOperator);
 
-       void addInvite(const std::string& nickname);
-       bool isInvited(const std::string& nickname);
-       void removeInvite(const std::string& nickname);
+        void addInvite(const std::string& nickname);
+        bool isInvited(const std::string& nickname);
+        void removeInvite(const std::string& nickname);
 
 
         //SETTER GETTER
@@ -54,7 +56,10 @@ class channel{
         void setOpTopic(bool value);
         void setIsPasswd(bool value);
         void setKey(std::string keyValue);
+        void setLimit(size_t limit);
+        size_t getLimit() const;
         std::string getKey();
+        size_t getNumberClient() const;
 
 };
 

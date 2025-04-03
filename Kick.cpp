@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Kick.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: pirulenc <pirulenc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 17:06:21 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 17:06:22 by lvan-slu         ###   ########.fr       */
+/*   Updated: 2025/04/03 14:40:58 by pirulenc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,10 +33,10 @@ void channel::removeUser(const std::string &nickname)
 				if ((*opIt)->getNickname() == nickname)
 				{
 					operator_lst.erase(opIt);
-					break;
+					break ;
 				}
 			}
-			return;
+			return ;
 		}
 	}
 }
