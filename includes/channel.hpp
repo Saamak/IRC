@@ -54,6 +54,8 @@ class channel{
         void setOpTopic(bool value);
         void setIsPasswd(bool value);
         void setKey(std::string keyValue);
+        void setLimit(size_t limit);
+        size_t getLimit() const;
         std::string getKey();
 
 };

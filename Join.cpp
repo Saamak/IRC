@@ -54,11 +54,8 @@ void command::join(const std::string& client_data)
     std::istringstream iss(client_data);
     std::string command, channel_name, password;
     
-    iss >> command >> channel_name;
-    if (iss >> password) {
-        // Le mot de passe a été fourni
-    }
-    
+    iss >> command >> channel_name >> password;
+
     std::string senderNickname = getSenderNickname();
     int sender_fd = getSenderFd();
     
@@ -82,6 +79,8 @@ void command::join(const std::string& client_data)
                 throw IrcException("ERR_BADCHANNELKEY", ERR_BADCHANNELKEY(senderNickname, channel_name));
             if (targetChannel->IsInChannel(senderNickname))
                 throw IrcException("ERR_USERONCHANNEL", ERR_USERONCHANNEL(senderNickname, channel_name, senderNickname));
+            if (targetChannel->getLimit() != std::numeric_limits<size_t>::max() && targetChannel->getClients().size() >= targetChannel->getLimit())
+                throw IrcException("ERR_CHANNELISFULL", ERR_CHANNELISFULL(senderNickname, channel_name));
             
             // Ajouter le client au canal AVANT de construire la liste
             targetChannel->addClient(getSender());

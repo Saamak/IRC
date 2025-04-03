@@ -64,6 +64,13 @@ void command::minusSignMode(std::string channel_name, std::string mode, std::str
                 std::cout << "Channel " << channel_name << " topic restriction disabled: " << targetChannel->getOpTopic() << std::endl;
                 return;
             }
+            else if (mode == "l") // Gestion du flag -l (supprimer la limite d'utilisateurs)
+            {
+                targetChannel->setLimit(std::numeric_limits<size_t>::max());
+                sendIt("User limit removed for channel " + channel_name, sender_fd);
+                std::cout << "Channel " << channel_name << " user limit removed" << std::endl;
+                return;
+            }
             else
             {
                 sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);

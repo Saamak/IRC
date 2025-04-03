@@ -112,3 +112,6 @@ void channel::setKey(std::string keyValue){key = keyValue;}
 std::string channel::getKey(){return key;}
 
 std::string channel::getName() const {return (_name);}
+
+void channel::setLimit(size_t limit) { maxUser = limit; }
+size_t channel::getLimit() const { return maxUser; }
