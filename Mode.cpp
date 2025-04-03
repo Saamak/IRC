@@ -49,6 +49,7 @@
 
 void command::mode(const std::string &client_data)
 {
+    P << "MODEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe" << E;
     std::istringstream iss(client_data);
     std::string command, channel_name, flag, password;
 
@@ -89,7 +90,7 @@ try
     {
         std::string sign = arguments[i].first;
         std::string mode = arguments[i].second;
-		std::cout << "Processing mode: " << mode << " with sign: " << sign << std::endl;
+		std::cout << B_R << "Processing mode: " << mode << " with sign: " << sign << std::endl;
 
         if (sign == "+")
             plusSignMode(channel_name, mode, senderNickname, sender_fd, password);

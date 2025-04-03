@@ -23,27 +23,30 @@
 
 void command::createChannel(const std::string& channel_name, const std::string& password, const std::string& senderNickname, int sender_fd)
 {
-	channel* newChannel = new channel(channel_name);
-	newChannel->addClient(getSender());
-	newChannel->addOperator(getSender());
+    channel* newChannel = new channel(channel_name);
+    newChannel->addClient(getSender());
+    newChannel->addOperator(getSender());
+    newChannel->setOpTopic(true);
 
-	if (!password.empty())
-	{
-		newChannel->setIsPasswd(true);
-		newChannel->setKey(password);
-	}
+    if (!password.empty())
+    {
+        newChannel->setIsPasswd(true);
+        newChannel->setKey(password);
+    }
 
-	_server.addChannel(newChannel);
+    _server.addChannel(newChannel);
 
-	std::string joinMessage = ":" + senderNickname + " JOIN " + channel_name + "\r\n";
-	send(sender_fd, joinMessage.c_str(), joinMessage.size(), 0);
+    // 1. Envoyer JOIN en premier
+    std::string joinMessage = ":" + senderNickname + " JOIN " + channel_name + "\r\n";
+    send(sender_fd, joinMessage.c_str(), joinMessage.size(), 0);
 
-	std::string defaultTopic = "Welcome to the channel!";
-	newChannel->setTopic(defaultTopic);
-	sendIt(RPL_TOPIC(senderNickname, channel_name, defaultTopic), sender_fd);
+    // 2. Envoyer TOPIC (ou NOTOPIC)
+    // sendIt(RPL_NOTOPIC(senderNickname, channel_name), sender_fd);
 
-	sendIt(RPL_NAMREPLY(senderNickname, channel_name, senderNickname), sender_fd);
-	sendIt(RPL_ENDOFNAMES(senderNickname, channel_name), sender_fd);
+    // 3. Envoyer NAMREPLY et ENDOFNAMES
+    std::string usersList = "@" + senderNickname;
+    sendIt(RPL_NAMREPLY(senderNickname, channel_name, usersList), sender_fd);
+    sendIt(RPL_ENDOFNAMES(senderNickname, channel_name), sender_fd);
 }
 
 void command::join(const std::string& client_data)
@@ -113,7 +116,7 @@ void command::join(const std::string& client_data)
                     usersList += "@";
                     
                 usersList += (*it)->getNickname();
-				P << usersList << E;
+                P << usersList << std::endl;
             }
             
             // Envoyer la liste complète d'utilisateurs au nouveau client
@@ -123,7 +126,6 @@ void command::join(const std::string& client_data)
             // Si le client était invité, le supprimer de la liste d'invitation
             if (targetChannel->isInvited(senderNickname))
                 targetChannel->removeInvite(senderNickname);
-                
             return;
         }
         

@@ -25,6 +25,7 @@ public:
 	void    nick(const std::string &client_data);
 	void    user(const std::string &client_data);
 	void    join(const std::string &client_data);
+	void 	who(const std::string& client_data);
 	void	createChannel(const std::string& channel_name, const std::string& password, const std::string& senderNickname, int sender_fd);
 	void    cap(const std::string &client_data);
 	size_t	getChanIterator(std::string channelname);
