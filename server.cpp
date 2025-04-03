@@ -175,6 +175,33 @@ void Server::start()
 		}
 		P << B_Y "Client_lst size : " << client_lst.size() << RESET << E;
 		P << B_Y "Poll_fd size : " << _poll_fds.size() << RESET << E;
+		std::vector<channel*> channels = getChannelsList();
+		P << B_M "Number of Channels : " << channels.size() << RESET << E;
+		for (size_t x = 0; x < channels.size(); x++)
+		{
+			std::vector<client*> clients = channels[x]->getClients();
+			std::vector<client*> operators = channels[x]->getOperators();
+			std::vector<std::string> invitations = channels[x]->getInviteList();
+			P << B_M << channels[x]->getName() << RESET << E;
+			for (size_t y = 0; y < clients.size(); y++)
+			{
+				if (y == 0)
+					P << B_M "Clients : " RESET << E;
+				P << B_M "     - " << clients[y]->getNickname() << RESET << E; 
+			}
+			for (size_t z = 0; z < operators.size(); z++)
+			{
+				if (z == 0)
+					P << B_M "Operators : " RESET << E;
+				P << B_M "     - " << operators[z]->getNickname() <<  RESET << E;
+			}
+			for (size_t a = 0; a < invitations.size(); a++)
+			{
+				if (a == 0)
+					P << B_M "Invitations : " RESET << E;
+				P << B_M "     - " << invitations[a] << RESET << E;;
+			}
+		}
 	}
 }
 
@@ -275,6 +302,11 @@ void Server::clearChannels() {
 	}
 	channels_lst.clear(); // Vider le vecteur
 	std::cout << "All channels have been cleared." << std::endl;
+}
+
+void Server::removeChannel(std::vector<channel*>::iterator i)
+{
+	channels_lst.erase(i);
 }
 
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
