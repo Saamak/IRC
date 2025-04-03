@@ -73,6 +73,19 @@ void command::plusSignMode(std::string channel_name, std::string mode, std::stri
                 std::cout << "Channel " << channel_name << " topic restriction enabled: " << targetChannel->getOpTopic() << std::endl;
                 return;
             }
+            else if (mode == "l") // Gestion du flag +l (limite d'utilisateurs)
+            {
+                if (argument.empty())
+                {
+                    sendIt(ERR_NEEDMOREPARAMS(senderNickname, "MODE"), sender_fd);
+                    return;
+                }
+                int limit = std::stoi(argument);
+                targetChannel->setLimit(limit);
+                sendIt("User limit set for channel " + channel_name + ": " + argument, sender_fd);
+                std::cout << "Channel " << channel_name << " user limit set to: " << limit << std::endl;
+                return;
+            }
             else
             {
                 sendIt(ERR_UNKNOWNMODE(senderNickname, mode), sender_fd);

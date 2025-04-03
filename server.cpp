@@ -63,7 +63,7 @@ void Server::myExit() {
 
 bool Server::init(char *pass)
 {
-	_server_name = "German.Elite.V2";
+	_server_name = "xxX.PPPBestIrc.Xxx";
 	_password = pass;
 	_server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_server_fd < 0)
