@@ -81,7 +81,6 @@ void command::kick(const std::string &client_data)
 		
 		int target_fd = _server.getClientFd(targetNickname);
 		send(target_fd, kickMessage.c_str(), kickMessage.size(), 0);
-		
 		std::vector<client*> channelClients = targetChannel->getClients();
 		for (size_t i = 0; i < channelClients.size(); i++)
 		{
