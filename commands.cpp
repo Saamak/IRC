@@ -170,7 +170,7 @@ command::command(Server& server) : _server(server)
 	_cmds["MODE"] = &command::mode;
 	_cmds["KICK"] = &command::kick;
 	_cmds["INVITE"] = &command::invite;
-	// _cmds["WHO"] = &command::who;s
+	_cmds["WHO"] = &command::who;
 	// _cmds["WHOIS"] = &command::whois;
 	// _cmds["WHOWAS"] = &command::whowas;
 }
