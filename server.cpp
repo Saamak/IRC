@@ -47,10 +47,8 @@ void Server::integrity(std::string client_data) {
 	cmdd.exec(client_data);
 }
 
-void Server::myExit() {
-	// delete(getNewClient());
-	// setNewClient(NULL); // Réinitialiser le pointeur
-	
+void Server::myExit()
+{
 	for (size_t i = 0; i < client_lst.size(); ++i) {
 		if (client_lst[i] != NULL) { // Vérifier si le pointeur est valide
 			delete client_lst[i];
@@ -58,6 +56,8 @@ void Server::myExit() {
 		}
 	}
 	client_lst.clear();
+	for (size_t x = 0; x < _poll_fds.size(); x++)
+		close(_poll_fds[x].fd);
 	_poll_fds.clear();
 	clearChannels();
 }
@@ -150,7 +150,20 @@ void handleSignal(int signal)
 	{
 		std::cout << BOLD << "SIGINT Received" << E;
 		exit_b = true;
+		return ;
 	}
+	if (signal == SIGQUIT)
+	{
+		std::cout << BOLD << "SIGQUIT Received" << E;
+		exit_b = true;
+		return ;
+	}
+}
+
+void set_signal()
+{
+	signal(SIGINT, handleSignal);
+	signal(SIGQUIT, handleSignal);
 }
 
 void Server::start()
@@ -168,7 +181,7 @@ void Server::start()
 	
 	while (true)
 	{
-		signal(SIGINT, handleSignal);
+		set_signal();
 		if(exit_b == true)
 		{
 			P <<B_Y << "SERVER OFF" << E;
