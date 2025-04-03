@@ -47,7 +47,8 @@
 //void	command::minusSignMode()
 
 
-void command::mode(const std::string &client_data)    ///MODE L
+void command::mode(const std::string &client_data) 
+{   ///MODE L
     std::istringstream iss(client_data);
     std::string command, channel_name, flag, password;
 

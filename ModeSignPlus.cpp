@@ -19,6 +19,7 @@
 #include "includes/client.hpp"
 #include <cstdlib> 
 #include <utility>
+#include <string>
 
 void command::plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string argument)
 {
@@ -80,7 +81,7 @@ void command::plusSignMode(std::string channel_name, std::string mode, std::stri
                     sendIt(ERR_NEEDMOREPARAMS(senderNickname, "MODE"), sender_fd);
                     return;
                 }
-                int limit = std::stoi(argument);
+                int limit = std::atoi(argument.c_str());
                 targetChannel->setLimit(limit);
                 sendIt("User limit set for channel " + channel_name + ": " + argument, sender_fd);
                 std::cout << "Channel " << channel_name << " user limit set to: " << limit << std::endl;
