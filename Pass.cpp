@@ -1,24 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Pass.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 12:48:11 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 12:48:12 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
 
 void command::pass(const std::string &client_data) // Pass daniel
 {

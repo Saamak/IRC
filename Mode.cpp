@@ -1,51 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Mode.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 11:16:23 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 11:16:24 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include "includes/IrcException.hpp"
-#include <cstdlib> 
-#include <utility>
-
-// MODE - Changer le mode du channel :
-// — i : Définir/supprimer le canal sur invitation uniquement
-// — t : Définir/supprimer les restrictions de la commande TOPIC pour les opérateurs de canaux
-// — k : Définir/supprimer la clé du canal (mot de passe) ------------------------------------  [GOOD]
-// — o : Donner/retirer le privilège de l’opérateur de canal
-// — l : Définir/supprimer la limite d’utilisateurs pour le canal
-
-// Mode i (Invitation uniquement)
-// +i : Rend le canal accessible uniquement sur invitation, les utilisateurs ne peuvent rejoindre que s'ils sont explicitement invités
-// -i : Supprime la restriction d'invitation, permettant à quiconque de rejoindre
-// Mode t (Restrictions de sujet)
-// +t : Seuls les opérateurs de canal peuvent changer le sujet
-// -t : N'importe quel membre du canal peut changer le sujet
-// Mode k (Clé/mot de passe du canal)
-// +k [mot de passe] : Définit un mot de passe requis pour rejoindre le canal
-// -k : Supprime l'exigence de mot de passe
-// Mode o (Statut d'opérateur)
-// +o [pseudo] : Accorde les privilèges d'opérateur à l'utilisateur spécifié
-// -o [pseudo] : Retire les privilèges d'opérateur de l'utilisateur spécifié
-// Mode l (Limite d'utilisateurs)
-// +l [nombre] : Définit un nombre maximum d'utilisateurs autorisés dans le canal
-// -l : Supprime la limite d'utilisateurs
-
-//void	command::minusSignMode()
-
 
 void command::mode(const std::string &client_data) 
 {   ///MODE L

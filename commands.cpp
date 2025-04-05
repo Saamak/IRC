@@ -1,12 +1,4 @@
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
 
 client* command::getSender() 
 {
@@ -208,15 +200,12 @@ command::command(Server& server) : _server(server)
 	_cmds["CAP"] = &command::cap;
 	// _cmds["PART"] = &command::part;
 	_cmds["PRIVMSG"] = &command::privmsg;
-	// _cmds["NOTICE"] = &command::notice;
 	_cmds["QUIT"] = &command::quit;
 	_cmds["TOPIC"] = &command::topic;
 	_cmds["MODE"] = &command::mode;
 	_cmds["KICK"] = &command::kick;
 	_cmds["INVITE"] = &command::invite;
 	_cmds["WHO"] = &command::who;
-	// _cmds["WHOIS"] = &command::whois;
-	// _cmds["WHOWAS"] = &command::whowas;
 }
 
 void command::exec(const std::string &client_data) 

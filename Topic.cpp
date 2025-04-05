@@ -1,113 +1,72 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Topic.cpp                                          :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/28 12:39:43 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/28 12:39:44 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
 
-void command::topic(const std::string &client_data) {
-	std::istringstream iss(client_data);
-	std::string command;
-	std::string channel_name;
-	std::string topic_name;
-	
-	iss >> command;
-	iss >> channel_name;
-	iss >> topic_name;
-	
-	
-	if (!topic_name.empty() && topic_name[0] == ' ') {
-		topic_name.erase(0, 1);
-	}
-	
-	std::vector<channel*>& Channel_tmp = _server.getChannelsList();
-	std::vector<client*>& Client_tmp = _server.getClientList();
-	std::string nickname = Client_tmp[_server.getIterator() - 1]->getNickname();
-	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-	int fd = pollfd_tmp[_server.getIterator()].fd;
-	size_t x = getChanIterator(channel_name);
-	
-	if (topic_name.empty())
-	{
-		if(channel_name.size() > 1  && channel_name[0] == '#')
-		{
-			for (size_t x = 0; x < Channel_tmp.size(); x++)
-			{
-				if (Channel_tmp[x]->getName() == channel_name) 
-				{
-					if (Channel_tmp[x]->getTopic().empty()){
-						sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
-						return ;
-					}
-					else{
-						sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
-						return;
-					}
-				}
-			}
-			std::string chan = "NONE";
-			sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
-			return;
-		}
-		else
-		{
-			for (size_t x = 0; x < Channel_tmp.size(); x++)
-			{
-				if (Channel_tmp[x]->getName() == channel_name) //verifier que /topic est execute dans un channel existant et dont je fais partit et dont je suis OP
-				{
-					if (Channel_tmp[x]->IsInChannel(nickname))
-					{
-						//AJOUTER LA CONDITION SI CLIENT EST DANS LE CHAN ET OP, QUE LES DROITS TOPIC SONT OPERATOR OU NON
-						Channel_tmp[x]->setTopic(channel_name);
-						//_server.sendIrcMessage(_server.getServerName(), "TOPIC", nickname, Channel_tmp[x]->getName(), channel_name, fd);
-						P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E; return;
-					}
-					else
-					{
-						//:Armida.german-elite.net 442 HELL #tata :You're not on that channel // ERR_NOTONCHANNEL
-						sendIt(ERR_NOTONCHANNEL(nickname, channel_name), fd);
-					}
-				}
-			}
-			sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
-		}
-	}
-	if(channel_name.size() > 0 && channel_name[0] == '#' && topic_name.size() > 0)
-	{
-		Channel_tmp[x]->setTopic(topic_name);
-	}
-	
-	for (size_t x = 0; x < Channel_tmp.size(); x++) {
-		if (Channel_tmp[x]->getName() == channel_name) {
-			if (topic_name.empty()) {
-				if (Channel_tmp[x]->getTopic().empty()) {
-					sendIt(RPL_NOTOPIC(nickname, channel_name), fd);
-				} else {
-					sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
-				}
-			} else {
-				Channel_tmp[x]->setTopic(topic_name);
-				sendIt(RPL_TOPIC(nickname, channel_name, Channel_tmp[x]->getTopic()), fd);
-				P << B_Y << "Channel topic changed to: " << B_R << Channel_tmp[x]->getTopic() << RESET << E;
-			}
-			return;
-		}
-	}
-	
-	sendIt(ERR_NOSUCHCHANNEL(nickname, channel_name), fd);
+void command::topic(const std::string &client_data) 
+{
+    std::string senderNickname = getSenderNickname();
+    int sender_fd = getSenderFd();
+
+    try 
+    {
+        std::istringstream iss(client_data);
+        std::string command, channel_name;
+        
+        iss >> command >> channel_name;
+        
+        if (channel_name.empty())
+            throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "TOPIC"));
+            
+        if (channel_name[0] != '#')
+            throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
+            
+        channel* targetChannel = getChannel(channel_name);
+        if (!targetChannel)
+            throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
+            
+        if (!targetChannel->IsInChannel(senderNickname))
+            throw IrcException("ERR_NOTONCHANNEL", ERR_NOTONCHANNEL(senderNickname, channel_name));
+        
+        // Extraction du sujet (peut contenir des espaces)
+        size_t topicPos = client_data.find(channel_name) + channel_name.length();
+        std::string topic_name;
+        
+        // Chercher si un sujet est fourni
+        size_t colonPos = client_data.find(':', topicPos);
+        if (colonPos != std::string::npos) {
+            topic_name = client_data.substr(colonPos + 1);
+        }
+        
+        // Si aucun sujet n'est fourni, afficher le sujet actuel
+        if (topic_name.empty()) 
+        {
+            if (targetChannel->getTopic().empty())
+                sendIt(RPL_NOTOPIC(senderNickname, channel_name), sender_fd);
+            else
+                sendIt(RPL_TOPIC(senderNickname, channel_name, targetChannel->getTopic()), sender_fd);
+        }
+        else 
+        {
+            // Vérifier les restrictions du mode +t
+            if (targetChannel->getOpTopic() && !targetChannel->IsOperator(senderNickname))
+                throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channel_name));
+            
+            // Changer le sujet
+            targetChannel->setTopic(topic_name);
+            
+            // Notifier tous les clients du canal
+            std::string topicMessage = ":" + senderNickname + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
+            std::vector<client*> channelClients = targetChannel->getClients();
+            
+            for (size_t i = 0; i < channelClients.size(); i++)
+            {
+                int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+                if (client_fd != -1)
+                    send(client_fd, topicMessage.c_str(), topicMessage.size(), 0);
+            }
+            
+            std::cout << "Channel " << channel_name << " topic changed to: " << topic_name << std::endl;
+        }
+    }
+    catch (const IrcException& e) {
+        sendIt(e.getErrorMsg(), sender_fd);
+    }
 }

@@ -5,6 +5,14 @@
 #include <string>
 #include "server.hpp"
 #include "client.hpp"
+#include "channel.hpp"
+#include "config.hpp"
+#include "IrcException.hpp"
+#include <iostream>
+#include <sstream>
+#include <cstdlib> 
+#include <utility>
+#include "colors.h"
 
 class command;
 // Déclaration du type de la fonction

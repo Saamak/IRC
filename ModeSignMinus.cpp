@@ -1,25 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ModeSignMinus.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/28 13:58:08 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/28 13:58:08 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
-#include "includes/colors.h"
 #include "includes/command.hpp"
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/IrcException.hpp"
-#include "includes/client.hpp"
-#include <iostream>
-#include <sstream>
-#include <cstdlib> 
-#include <utility>
 
 void command::minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd)
 {

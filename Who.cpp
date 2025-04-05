@@ -1,16 +1,4 @@
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
-
-#include "includes/command.hpp"
-#include "includes/IrcException.hpp"
-#include <sstream>
 
 void command::who(const std::string& client_data)
 {
@@ -35,7 +23,6 @@ void command::who(const std::string& client_data)
                 std::string user = (*it)->getUsername();
                 if (user.empty()) user = nick; // Fallback si username n'est pas défini
                 
-                // Format: servername 352 client chan username hostname servername nick H@ :0 realname
                 std::string whoReply = ":" + _server.getServerName() + " 352 " + senderNickname + " " + 
                                       target + " " + user + " localhost " + _server.getServerName() + " " + 
                                       nick + " H";

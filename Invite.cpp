@@ -1,25 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Invite.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 15:41:23 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 15:41:25 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
-#include "includes/colors.h"
 #include "includes/command.hpp"
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/IrcException.hpp"
-#include "includes/client.hpp"
-#include <iostream>
-#include <sstream>
-#include <cstdlib> 
-#include <utility>
 
 void command::invite(const std::string &client_data)
 {

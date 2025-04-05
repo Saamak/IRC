@@ -15,6 +15,11 @@
 #include "client.hpp"
 #include "response.hpp"
 #include "error.hpp"
+#include <algorithm> 
+#include <csignal>
+#include <fcntl.h>
+#include <cstring>
+#include <unistd.h>
 
 class channel;
 
