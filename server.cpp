@@ -7,6 +7,7 @@
 #include "includes/command.hpp"
 #include <algorithm> 
 #include <csignal>
+#include <fcntl.h>
 
 bool exit_b = false;
 
@@ -46,10 +47,8 @@ void Server::integrity(std::string client_data) {
 	cmdd.exec(client_data);
 }
 
-void Server::myExit() {
-	// delete(getNewClient());
-	// setNewClient(NULL); // Réinitialiser le pointeur
-	
+void Server::myExit()
+{
 	for (size_t i = 0; i < client_lst.size(); ++i) {
 		if (client_lst[i] != NULL) { // Vérifier si le pointeur est valide
 			delete client_lst[i];
@@ -57,6 +56,8 @@ void Server::myExit() {
 		}
 	}
 	client_lst.clear();
+	for (size_t x = 0; x < _poll_fds.size(); x++)
+		close(_poll_fds[x].fd);
 	_poll_fds.clear();
 	clearChannels();
 }
@@ -69,6 +70,27 @@ bool Server::init(char *pass)
 	if (_server_fd < 0)
 	{
 		std::cerr << "Error: socket creation failed" << std::endl;
+		return false;
+	}
+
+	int opt = 1;
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) 
+	{
+		std::cerr << "Error: setsockopt failed" << std::endl;
+		close(_server_fd);
+		return false;
+	}
+	
+	int flags = fcntl(_server_fd, F_GETFL, 0);
+	if (flags == -1) {
+		std::cerr << "Error: fcntl get failed" << std::endl;
+		close(_server_fd);
+		return false;
+	}
+	if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) == -1) 
+	{
+		std::cerr << "Error: fcntl set failed" << std::endl;
+		close(_server_fd);
 		return false;
 	}
 	
@@ -128,7 +150,20 @@ void handleSignal(int signal)
 	{
 		std::cout << BOLD << "SIGINT Received" << E;
 		exit_b = true;
+		return ;
 	}
+	if (signal == SIGQUIT)
+	{
+		std::cout << BOLD << "SIGQUIT Received" << E;
+		exit_b = true;
+		return ;
+	}
+}
+
+void set_signal()
+{
+	signal(SIGINT, handleSignal);
+	signal(SIGQUIT, handleSignal);
 }
 
 void Server::start()
@@ -146,7 +181,7 @@ void Server::start()
 	
 	while (true)
 	{
-		signal(SIGINT, handleSignal);
+		set_signal();
 		if(exit_b == true)
 		{
 			P <<B_Y << "SERVER OFF" << E;
@@ -175,6 +210,33 @@ void Server::start()
 		}
 		P << B_Y "Client_lst size : " << client_lst.size() << RESET << E;
 		P << B_Y "Poll_fd size : " << _poll_fds.size() << RESET << E;
+		std::vector<channel*> channels = getChannelsList();
+		P << B_M "Number of Channels : " << channels.size() << RESET << E;
+		for (size_t x = 0; x < channels.size(); x++)
+		{
+			std::vector<client*> clients = channels[x]->getClients();
+			std::vector<client*> operators = channels[x]->getOperators();
+			std::vector<std::string> invitations = channels[x]->getInviteList();
+			P << B_M << channels[x]->getName() << RESET << E;
+			for (size_t y = 0; y < clients.size(); y++)
+			{
+				if (y == 0)
+					P << B_M "Clients : " RESET << E;
+				P << B_M "     - " << clients[y]->getNickname() << RESET << E; 
+			}
+			for (size_t z = 0; z < operators.size(); z++)
+			{
+				if (z == 0)
+					P << B_M "Operators : " RESET << E;
+				P << B_M "     - " << operators[z]->getNickname() <<  RESET << E;
+			}
+			for (size_t a = 0; a < invitations.size(); a++)
+			{
+				if (a == 0)
+					P << B_M "Invitations : " RESET << E;
+				P << B_M "     - " << invitations[a] << RESET << E;;
+			}
+		}
 	}
 }
 
@@ -275,6 +337,11 @@ void Server::clearChannels() {
 	}
 	channels_lst.clear(); // Vider le vecteur
 	std::cout << "All channels have been cleared." << std::endl;
+}
+
+void Server::removeChannel(std::vector<channel*>::iterator i)
+{
+	channels_lst.erase(i);
 }
 
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {

@@ -91,6 +91,10 @@ channel::~channel() { P << "destructor channel" << E; }
 
 std::vector<client*> channel::getClients() const {return (client_lst);}
 
+std::vector<client*> channel::getOperators() const {return (operator_lst);}
+
+std::vector<std::string> channel::getInviteList() const {return (invite_list);}
+
 std::string channel::getTopic() const {return (_topic);}
 
 void channel::setTopic(const std::string topic_name) {_topic = topic_name;}
@@ -114,4 +118,7 @@ std::string channel::getKey(){return key;}
 std::string channel::getName() const {return (_name);}
 
 void channel::setLimit(size_t limit) { maxUser = limit; }
+
 size_t channel::getLimit() const { return maxUser; }
+
+size_t channel::getNumberClient() const {return (client_lst.size());}
