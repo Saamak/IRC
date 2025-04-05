@@ -96,7 +96,6 @@ void command::join(const std::string& client_data)
                 if (client_fd != -1)
                     send(client_fd, joinMessage.c_str(), joinMessage.size(), 0);
             }
-            
             // Envoyer les informations du canal
             if (!targetChannel->getTopic().empty())
                 sendIt(RPL_TOPIC(senderNickname, channel_name, targetChannel->getTopic()), sender_fd);

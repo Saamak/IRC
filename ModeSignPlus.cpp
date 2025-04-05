@@ -57,6 +57,16 @@ void command::plusSignMode(std::string channel_name, std::string mode, std::stri
                 }
                 targetChannel->addOperator(targetClient);
                 sendIt("User " + argument + " is now an operator in channel " + channel_name, sender_fd);
+                
+                std::string modeMessage = ":" + senderNickname + " MODE " + channel_name + " +o " + argument + "\r\n";
+                std::vector<client*> channelClients = targetChannel->getClients();
+                
+                for (size_t i = 0; i < channelClients.size(); i++)
+                {
+                    int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+                    if (client_fd != -1)
+                        send(client_fd, modeMessage.c_str(), modeMessage.size(), 0);
+                }
                 std::cout << "User " << argument << " added as operator in channel " << channel_name << std::endl;
                 return;
             }
