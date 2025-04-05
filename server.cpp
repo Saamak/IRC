@@ -42,17 +42,24 @@ void Server::integrity(std::string client_data) {
 
 void Server::myExit()
 {
-	for (size_t i = 0; i < client_lst.size(); ++i) {
-		if (client_lst[i] != NULL) { // Vérifier si le pointeur est valide
-			delete client_lst[i];
-			client_lst[i] = NULL; // Mettre le pointeur à NULL après suppression
-		}
-	}
-	client_lst.clear();
-	for (size_t x = 0; x < _poll_fds.size(); x++)
-		close(_poll_fds[x].fd);
-	_poll_fds.clear();
-	clearChannels();
+    // 1. D'abord nettoyer tous les canaux
+    clearChannels();
+
+    // 2. Ensuite libérer tous les clients
+    for (size_t i = 0; i < client_lst.size(); ++i) {
+        if (client_lst[i] != NULL) {
+            delete client_lst[i];
+            client_lst[i] = NULL;
+        }
+    }
+    client_lst.clear();
+
+    // 3. Fermer tous les descripteurs de fichiers
+    for (size_t x = 0; x < _poll_fds.size(); x++)
+        close(_poll_fds[x].fd);
+    _poll_fds.clear();
+
+    std::cout << "Server shut down successfully. All memory freed." << std::endl;
 }
 
 bool Server::init(char *pass)
@@ -324,12 +331,20 @@ void Server::printChannelsAndClients() const
 	}
 }
 
-void Server::clearChannels() {
-	for (size_t i = 0; i < channels_lst.size(); ++i) {
-		delete channels_lst[i]; // Libérer chaque canal
-	}
-	channels_lst.clear(); // Vider le vecteur
-	std::cout << "All channels have been cleared." << std::endl;
+void Server::clearChannels()
+{
+    // Parcourir et libérer chaque canal
+    for (size_t i = 0; i < channels_lst.size(); ++i) {
+        if (channels_lst[i] != NULL) {
+            channels_lst[i]->getClients().clear();
+            channels_lst[i]->getOperators().clear();
+            channels_lst[i]->getInviteList().clear();
+            
+            delete channels_lst[i];
+            channels_lst[i] = NULL;
+        }
+    }
+    channels_lst.clear();
 }
 
 void Server::removeChannel(std::vector<channel*>::iterator i)

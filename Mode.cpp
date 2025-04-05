@@ -48,7 +48,7 @@ try
         if (sign == "+")
             plusSignMode(channel_name, mode, senderNickname, sender_fd, password);
         else if (sign == "-")
-            minusSignMode(channel_name, mode, senderNickname, sender_fd);
+            minusSignMode(channel_name, mode, senderNickname, sender_fd, password);
         else
             throw IrcException("ERR_UNKNOWNMODE", ERR_UNKNOWNMODE(senderNickname, sign));
     }
