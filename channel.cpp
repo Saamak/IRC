@@ -50,7 +50,6 @@ bool    channel::ClientExist(const std::string &name)
 
 channel::channel(std::string name): _name(name)
 {
-	P << "channel constructor" << E;
 	isInvitOnly = false;
 	isPasswd = false;
 	opTopic = false;
@@ -87,7 +86,7 @@ std::string channel::getModes() const
     return modes;
 }
 
-channel::~channel() { P << "destructor channel" << E; }
+channel::~channel() {;}
 
 std::vector<client*> channel::getClients() const {return (client_lst);}
 

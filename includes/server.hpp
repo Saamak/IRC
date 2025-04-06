@@ -40,6 +40,7 @@ public:
     std::vector<std::string> tokens;
     Server(int port);
     ~Server();
+    void printServerStatus();
     bool init(char *pass);
     void start();
     void myExit();
@@ -49,10 +50,6 @@ public:
     void clientConnected();
     int HandleCommunication(int i);
     void addClient(client* newClient);
-    void removeClient(client* existingClient);
-    void printChannelsAndClients() const;
-    void sendToClient(int client_fd, const std::string &message);
-    void removeChannel(std::vector<channel*>::iterator i);
 
     //SETTER GETTER
     int getPort() const { return _port; }

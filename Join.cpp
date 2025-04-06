@@ -91,7 +91,6 @@ void command::join(const std::string& client_data)
                     usersList += "@";
                     
                 usersList += (*it)->getNickname();
-                P << usersList << std::endl;
             }
             // Envoyer la liste complète d'utilisateurs au nouveau client
             sendIt(RPL_NAMREPLY(senderNickname, channel_name, usersList), sender_fd);

@@ -168,76 +168,41 @@ void set_signal()
 
 void Server::start()
 {
-	if (listen(_server_fd, 5) < 0)
-	{
-		std::cerr << "Error: listen failed" << std::endl;
-		return;
-	}
-	struct pollfd server_pollfd;
-	server_pollfd.fd = _server_fd;
-	server_pollfd.events = POLLIN;
-	server_pollfd.revents = 0;
-	_poll_fds.push_back(server_pollfd);
-	
-	while (true)
-	{
-		set_signal();
-		if(exit_b == true)
-		{
-			P <<B_Y << "SERVER OFF" << E;
-			myExit();
-		}
-		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
-		if (poll_count < 0)
-		{
-			std::cerr << "Error: poll failed" << std::endl;
-			return;
-		}
-		for (size_t i = 0; i < _poll_fds.size(); ++i)
-		{
-			iterator = i;
-			if (_poll_fds[i].revents & POLLIN)
-			{
-				if (_poll_fds[i].fd == _server_fd)
-				{
-					clientConnected();
-				} 
-				else 
-				{
-					i = HandleCommunication(i);
-				}
-			}
-		}
-		P << B_Y "Client_lst size : " << client_lst.size() << RESET << E;
-		P << B_Y "Poll_fd size : " << _poll_fds.size() << RESET << E;
-		std::vector<channel*> channels = getChannelsList();
-		P << B_M "Number of Channels : " << channels.size() << RESET << E;
-		for (size_t x = 0; x < channels.size(); x++)
-		{
-			std::vector<client*> clients = channels[x]->getClients();
-			std::vector<client*> operators = channels[x]->getOperators();
-			std::vector<std::string> invitations = channels[x]->getInviteList();
-			P << B_M << channels[x]->getName() << RESET << E;
-			for (size_t y = 0; y < clients.size(); y++)
-			{
-				if (y == 0)
-					P << B_M "Clients : " RESET << E;
-				P << B_M "     - " << clients[y]->getNickname() << RESET << E; 
-			}
-			for (size_t z = 0; z < operators.size(); z++)
-			{
-				if (z == 0)
-					P << B_M "Operators : " RESET << E;
-				P << B_M "     - " << operators[z]->getNickname() <<  RESET << E;
-			}
-			for (size_t a = 0; a < invitations.size(); a++)
-			{
-				if (a == 0)
-					P << B_M "Invitations : " RESET << E;
-				P << B_M "     - " << invitations[a] << RESET << E;;
-			}
-		}
-	}
+    if (listen(_server_fd, 5) < 0)
+    {
+        std::cerr << "Error: listen failed" << std::endl;
+        return;
+    }
+    struct pollfd server_pollfd;
+    server_pollfd.fd = _server_fd;
+    server_pollfd.events = POLLIN;
+    server_pollfd.revents = 0;
+    _poll_fds.push_back(server_pollfd);
+    
+    while (true)
+    {
+        set_signal();
+        if(exit_b == true)
+            myExit();
+        int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
+        if (poll_count < 0)
+        {
+            std::cerr << "Error: poll failed" << std::endl;
+            return;
+        }
+        for (size_t i = 0; i < _poll_fds.size(); ++i)
+        {
+            iterator = i;
+            if (_poll_fds[i].revents & POLLIN)
+            {
+                if (_poll_fds[i].fd == _server_fd)
+                    clientConnected();
+                else 
+                    i = HandleCommunication(i);
+            }
+        }
+        printServerStatus();
+    }
 }
 
 int Server::HandleCommunication(int i)
@@ -290,10 +255,7 @@ int Server::HandleCommunication(int i)
 		client_lst[iterator - 1]->emptyBufferClient();
 		std::vector<std::string> splitted = split(client_test, '\n');
 		for(size_t x = 0; x < splitted.size(); x++)
-		{
-			P << B_Y << splitted[x] << RESET << E;
 			integrity(splitted[x]);
-		}
 	}
 	else
 	{
@@ -312,25 +274,6 @@ void Server::addClient(client* newClient)
 	client_lst.push_back(newClient);
 }
 
-void Server::removeClient(client* existingClient)
-{
-	// std::remove pour déplacer les éléments à supprimer à la fin du vecteur
-	std::vector<client*>::iterator it = std::remove(client_lst.begin(), client_lst.end(), existingClient);
-	// erase pour supprimer les éléments déplacés
-	client_lst.erase(it, client_lst.end());
-}
-
-void Server::printChannelsAndClients() const
-{
-	for (size_t i = 0; i < channels_lst.size(); ++i) {
-		std::cout << "Channel: " << channels_lst[i]->getName() << std::endl;
-		std::vector<client*> clients = channels_lst[i]->getClients();
-		for (size_t j = 0; j < clients.size(); ++j) {
-			std::cout << "  Client: " << clients[j]->getNickname() << std::endl;
-		}
-	}
-}
-
 void Server::clearChannels()
 {
     // Parcourir et libérer chaque canal
@@ -339,7 +282,6 @@ void Server::clearChannels()
             channels_lst[i]->getClients().clear();
             channels_lst[i]->getOperators().clear();
             channels_lst[i]->getInviteList().clear();
-            
             delete channels_lst[i];
             channels_lst[i] = NULL;
         }
@@ -347,20 +289,97 @@ void Server::clearChannels()
     channels_lst.clear();
 }
 
-void Server::removeChannel(std::vector<channel*>::iterator i)
-{
-	channels_lst.erase(i);
-}
-
 Server::Server(int port) : _port(port), _server_fd(-1), newClient(NULL) {
-	P <<BOLD <<"SERVEUR CONSTRUCTOR" <<RESET <<E;
 	std::memset(&_server_addr, 0, sizeof(_server_addr));
 }
 
 Server::~Server() {
-	P <<BOLD <<"SERVEUR DESTRUCTOR" <<RESET <<E;
 	if (_server_fd != -1)
 		close(_server_fd);
+}
+
+void Server::printServerStatus() 
+{
+    time_t now = time(0);
+    char* dt = ctime(&now);
+    dt[strlen(dt) - 1] = '\0';
+
+    // Entête
+    std::cout << "\n" << B_G << "┌─────────────────────────────────────────────────────────┐" << RESET << std::endl;
+    std::cout << B_G << "│                    IRC SERVER STATUS                     │" << RESET << std::endl;
+    std::cout << B_G << "│                 " << dt << "                 │" << RESET << std::endl;
+    std::cout << B_G << "└─────────────────────────────────────────────────────────┘" << RESET << std::endl;
+    
+    // Informations générales
+    std::cout << Y << "• Connected clients: " << BOLD << client_lst.size() << RESET 
+              << Y << " | Active file descriptors: " << BOLD << _poll_fds.size() << RESET 
+              << Y << " | Channels: " << BOLD << channels_lst.size() << RESET << std::endl;
+    
+    // Séparateur
+    std::cout << B_G << "┌─────────────────────────────────────────────────────────┐" << RESET << std::endl;
+    
+    // Détails des canaux
+    if (channels_lst.empty()) {
+        std::cout << Y << "│ " << RESET << "No active channels" << std::endl;
+    } else {
+        for (size_t i = 0; i < channels_lst.size(); i++) {
+            std::string modes = channels_lst[i]->getModes();
+            size_t memberCount = channels_lst[i]->getNumberClient();
+            size_t limit = channels_lst[i]->getLimit();
+            
+            std::string limitStr;
+            if (limit == std::numeric_limits<size_t>::max()) {
+                limitStr = "∞";
+            } else {
+                std::ostringstream oss;
+                oss << limit;
+                limitStr = oss.str();
+            }
+            
+            // En-tête du canal
+            std::cout << B_M << "│ CHANNEL: " << BOLD << channels_lst[i]->getName() 
+                      << RESET << B_M << " | MODE: " << modes 
+                      << " | USERS: " << memberCount << "/" << limitStr
+                      << RESET << std::endl;
+            
+            if (!channels_lst[i]->getTopic().empty()) {
+                std::cout << G << "│ TOPIC: " << RESET << channels_lst[i]->getTopic() << std::endl;
+            }
+            
+            // Liste des clients
+            std::cout << Y << "│ MEMBERS:" << RESET << std::endl;
+            const std::vector<client*>& clients = channels_lst[i]->getClients();
+            for (size_t j = 0; j < clients.size(); j++) {
+                std::string nickname = clients[j]->getNickname();
+                std::string role = channels_lst[i]->IsOperator(nickname) ? "@" : " ";
+                std::cout << "│   " << role << " " << nickname;
+                
+                // Afficher aussi le username si disponible
+                if (!clients[j]->getUsername().empty() && clients[j]->getUsername() != "unknown") {
+                    std::cout << " (" << clients[j]->getUsername() << ")";
+                }
+                
+                std::cout << std::endl;
+            }
+            
+            // Liste des invitations
+            const std::vector<std::string>& invites = channels_lst[i]->getInviteList();
+            if (!invites.empty()) {
+                std::cout << Y << "│ INVITES:" << RESET << std::endl;
+                for (size_t k = 0; k < invites.size(); k++) {
+                    std::cout << "│   " << invites[k] << std::endl;
+                }
+            }
+            
+            // Séparateur entre les canaux
+            if (i < channels_lst.size() - 1) {
+                std::cout << B_G << "├─────────────────────────────────────────────────────────┤" << RESET << std::endl;
+            }
+        }
+    }
+    
+    // Pied de page
+    std::cout << B_G << "└─────────────────────────────────────────────────────────┘\n" << RESET << std::endl;
 }
 
 client* Server::getNewClient() const {return (newClient);}
@@ -380,8 +399,6 @@ int Server::getIterator(){return (iterator);}
 void Server::setIterator(int i) { iterator = i; }
 
 std::vector<struct pollfd>& Server::getPollFd() {return (_poll_fds);}
-
-void Server::sendToClient(int client_fd, const std::string &message) { send(client_fd, message.c_str(), message.size(), 0); }
 
 std::string Server::getPassword() {return (_password);}
 
