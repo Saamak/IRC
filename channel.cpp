@@ -20,11 +20,14 @@ void channel::addClient(client* newClient)
 
 bool    channel::IsInChannel(const std::string &nickname)
 {
-	for (std::vector<client*>::const_iterator it = client_lst.begin(); it != client_lst.end(); ++it) 
+	if (client_lst.empty())
+		return false;
+	std::vector<client*>::const_iterator it = client_lst.begin();
+	while (it != client_lst.end()) 
 	{
 		if ((*it)->getNickname() == nickname)
 		return true;
-	}
+		it++;	}
 	return false;
 }
 

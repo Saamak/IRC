@@ -105,77 +105,67 @@ std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(con
 void command::quit(const std::string &client_data) 
 {
 	std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
-    std::vector<client*>& Client_tmp = _server.getClientList();
-    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-    size_t iterator = _server.getIterator();
-    
-    if (iterator < 1 || iterator > Client_tmp.size()) 
-    {
-        P << "Invalid iterator: " << iterator << E;
-        return;
-    }
-    
-    size_t index = iterator - 1;
-    if (index >= Client_tmp.size()) {
-        P << "Invalid client index: " << index << E;
-        return;
-    }
-    
-    // Get the client that's disconnecting
-    client* client_to_remove = Client_tmp[index];
-    if (client_to_remove) 
-    {
-        if (quitMessage.empty())
-            quitMessage = " left the server";
-            
-        std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
-                                     " QUIT :" + quitMessage + "\r\n";
-        
-        // Notify channel members before removal
-        std::vector<channel*>& channels = _server.getChannelsList();
-        for (size_t i = 0; i < channels.size(); ++i) 
-        {
-            if (channels[i]->IsInChannel(client_to_remove->getNickname()))
-            {
-                // Send message to all channel members except the one quitting
-                std::vector<client*> channelClients = channels[i]->getClients();
-                for (size_t j = 0; j < channelClients.size(); j++)
-                {
-                    if (channelClients[j]->getNickname() != client_to_remove->getNickname())
-                    {
-                        int client_fd = _server.getClientFd(channelClients[j]->getNickname());
-                        if (client_fd != -1)
-                            send(client_fd, fullQuitMessage.c_str(), fullQuitMessage.size(), 0);
-                    }
-                }
-                
-                // Now remove the user from the channel
-                channels[i]->removeUser(client_to_remove->getNickname());
-                
-                // Check if channel is empty
-                if (channels[i]->getNumberClient() == 0)
-                {
-                    channel* chan_to_delete = channels[i];
-                    channels.erase(channels.begin() + i--);
-                    delete chan_to_delete;  // Important: delete the channel object
-                }
-            }
-        }
-        
-        // First close the file descriptor
-        if (iterator < pollfd_tmp.size()) 
-        {
-            std::cout << "Closing fd: " << pollfd_tmp[iterator].fd << std::endl;  // Debug line
-            close(pollfd_tmp[iterator].fd);
-            pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
-        }
-        
-        // Then delete the client object and remove from list
-        delete client_to_remove;
-        Client_tmp.erase(Client_tmp.begin() + index);
-    }
+	std::vector<client*>& Client_tmp = _server.getClientList();
+	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+	size_t iterator = _server.getIterator();
+	
+	if (iterator < 1 || iterator > Client_tmp.size()) 
+	{
+		P << "Invalid iterator: " << iterator << E;
+		return;
+	}
+	
+	size_t index = iterator - 1;
+	if (index >= Client_tmp.size()) {
+		P << "Invalid client index: " << index << E;
+		return;
+	}
+	
+	client* client_to_remove = Client_tmp[index];
+	if (client_to_remove) 
+	{
+		if (quitMessage.empty())
+			quitMessage = " left the server";
+			
+		std::string fullQuitMessage = ":" + client_to_remove->getNickname() + " QUIT :" + quitMessage + "\r\n";
+		
+		std::vector<channel*>& channels = _server.getChannelsList();
+		for (size_t i = 0; i < channels.size(); ++i) 
+		{
+			if (channels[i]->IsInChannel(client_to_remove->getNickname()))
+			{
+				std::vector<client*> channelClients = channels[i]->getClients();
+				for (size_t j = 0; j < channelClients.size(); j++)
+				{
+					if (channelClients[j]->getNickname() != client_to_remove->getNickname())
+					{
+						int client_fd = _server.getClientFd(channelClients[j]->getNickname());
+						if (client_fd != -1)
+							send(client_fd, fullQuitMessage.c_str(), fullQuitMessage.size(), 0);
+					}
+				}
+				
+				channels[i]->removeUser(client_to_remove->getNickname());
+				
+				if (channels[i]->getNumberClient() == 0)
+				{
+					channel* chan_to_delete = channels[i];
+					channels.erase(channels.begin() + i--);
+					delete chan_to_delete;
+				}
+			}
+		}
+		
+		if (iterator < pollfd_tmp.size()) 
+		{
+			close(pollfd_tmp[iterator].fd);
+			pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
+		}
+		
+		delete client_to_remove;
+		Client_tmp.erase(Client_tmp.begin() + index);
+	}
 }
-
 
 void    command::cap(const std::string &client_data)
 {
