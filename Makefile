@@ -21,7 +21,6 @@ SRC = main.cpp \
 	ModeSignPlus.cpp \
 	Part.cpp
 
-# Préfixer tous les objets avec le dossier obj/
 OBJ = $(addprefix $(OBJ_DIR)/, $(SRC:.cpp=.o))
 
 CXX = c++
