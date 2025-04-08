@@ -80,18 +80,11 @@ bool Server::init(char *pass)
 		close(_server_fd);
 		return false;
 	}
-	
-	int flags = fcntl(_server_fd, F_GETFL, 0);
-	if (flags == -1) {
-		std::cerr << "Error: fcntl get failed" << std::endl;
-		close(_server_fd);
-		return false;
-	}
-	if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) == -1) 
+	if (fcntl(_server_fd, F_SETFL, O_NONBLOCK) == -1) 
 	{
-		std::cerr << "Error: fcntl set failed" << std::endl;
-		close(_server_fd);
-		return false;
+	std::cerr << "Error: fcntl set failed" << std::endl;
+	close(_server_fd);
+	return false;
 	}
 	
 	_server_addr.sin_family = AF_INET;
