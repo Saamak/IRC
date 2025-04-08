@@ -1,12 +1,4 @@
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
 
 client* command::getSender() 
 {
@@ -108,88 +100,72 @@ std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(con
 		}
 	}
 	return arguments;
-	//Checker de bonne mise en forme, que + et -, puis que des arguments valides, sinnon error;
-	//std::vector<std::pair<std::string,std::string> > Arg;
 }
-
-// void command::quit(const std::string &client_data) 
-// {
-// 	(void)client_data;
-// 	std::vector<client*>& Client_tmp = _server.getClientList();
-// 	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-// 	size_t iterator = _server.getIterator();
-	
-// 	if (iterator < 1 || iterator > Client_tmp.size()) {
-// 		P << " invalid iterator: " << iterator << E;
-// 		return;
-// 	}
-	
-// 	// Supprimer le client de manière sécurisée
-// 	client* client_to_remove = Client_tmp[iterator - 1];
-// 	if (client_to_remove) {
-// 		P << "Removing client: " << client_to_remove->getNickname() << E;
-// 		delete client_to_remove;
-// 		Client_tmp.erase(Client_tmp.begin() + (iterator - 1));
-// 		close(pollfd_tmp[iterator].fd); // Mettre le pointeur à NULL
-// 		pollfd_tmp.erase(pollfd_tmp.begin() + (iterator));
-// 	} else {
-// 		P << "Client pointer is null, skipping removal" << E;
-// 	}
-// }
 
 void command::quit(const std::string &client_data) 
 {
-	(void)client_data;
-	std::vector<client*>& Client_tmp = _server.getClientList();
-	std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-	size_t iterator = _server.getIterator();
-	
-	if (iterator < 1 || iterator > Client_tmp.size()) 
-	{
-		P << "Invalid iterator: " << iterator << E;
-		return;
-	}
-	
-	size_t index = iterator - 1;
-	if (index >= Client_tmp.size()) {
-		P << "Invalid client index: " << index << E;
-		return;
-	}
-	
-	// Supprimer le client de manière sécurisée
-	client* client_to_remove = Client_tmp[index];
-	if (client_to_remove) 
-	{
-		// Notifier les canaux avant la suppression
-		std::vector<channel*>& channels = _server.getChannelsList();
-		for (size_t i = 0; i < channels.size(); ++i) 
-		{
-			if (channels[i]->IsInChannel(client_to_remove->getNickname()))
-				channels[i]->removeUser(client_to_remove->getNickname());
-			if (channels[i]->getNumberClient() == 0)
-				channels.erase(channels.begin() + i);
-		}
-		P << "Removing client: " << client_to_remove->getNickname() << E;
-		delete client_to_remove;
-		Client_tmp.erase(Client_tmp.begin() + index);
-		
-		if (iterator < pollfd_tmp.size()) 
-		{
-			close(pollfd_tmp[iterator].fd);
-			pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
-		}
-	}
-}
-
-size_t command::getChanIterator(std::string channelname)
-{
-	std::vector<channel*>& Channel_tmp = _server.getChannelsList();
-	for (size_t x = 0; x < Channel_tmp.size(); x++)
-	{
-		if (Channel_tmp[x]->getName() == channelname) 
-		return x;
-	}
-	return static_cast<size_t>(-1);
+    std::vector<client*>& Client_tmp = _server.getClientList();
+    std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+    size_t iterator = _server.getIterator();
+    
+    if (iterator < 1 || iterator > Client_tmp.size()) 
+    {
+        P << "Invalid iterator: " << iterator << E;
+        return;
+    }
+    
+    size_t index = iterator - 1;
+    if (index >= Client_tmp.size()) {
+        P << "Invalid client index: " << index << E;
+        return;
+    }
+    
+    // Récupérer le client qui se déconnecte
+    client* client_to_remove = Client_tmp[index];
+    if (client_to_remove) 
+    {
+        std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
+        if (quitMessage.empty())
+            quitMessage = "Leaving";
+            
+        std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
+                                     " QUIT :Quit: " + quitMessage + "\r\n";
+        
+        // Notifier les membres des canaux avant la suppression
+        std::vector<channel*>& channels = _server.getChannelsList();
+        for (size_t i = 0; i < channels.size(); ++i) 
+        {
+            if (channels[i]->IsInChannel(client_to_remove->getNickname()))
+            {
+                // Envoyer le message à tous les membres du canal sauf à celui qui quitte
+                std::vector<client*> channelClients = channels[i]->getClients();
+                for (size_t j = 0; j < channelClients.size(); j++)
+                {
+                    if (channelClients[j]->getNickname() != client_to_remove->getNickname())
+                    {
+                        int client_fd = _server.getClientFd(channelClients[j]->getNickname());
+                        if (client_fd != -1)
+                            send(client_fd, fullQuitMessage.c_str(), fullQuitMessage.size(), 0);
+                    }
+                }
+                
+                // Maintenant retirer l'utilisateur du canal
+                channels[i]->removeUser(client_to_remove->getNickname());
+                
+                // Vérifier si le canal est vide
+                if (channels[i]->getNumberClient() == 0)
+                    channels.erase(channels.begin() + i--);
+            }
+        }
+        delete client_to_remove;
+        Client_tmp.erase(Client_tmp.begin() + index);
+        
+        if (iterator < pollfd_tmp.size()) 
+        {
+            close(pollfd_tmp[iterator].fd);
+            pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
+        }
+    }
 }
 
 void    command::cap(const std::string &client_data)
@@ -208,15 +184,12 @@ command::command(Server& server) : _server(server)
 	_cmds["CAP"] = &command::cap;
 	// _cmds["PART"] = &command::part;
 	_cmds["PRIVMSG"] = &command::privmsg;
-	// _cmds["NOTICE"] = &command::notice;
 	_cmds["QUIT"] = &command::quit;
 	_cmds["TOPIC"] = &command::topic;
 	_cmds["MODE"] = &command::mode;
 	_cmds["KICK"] = &command::kick;
 	_cmds["INVITE"] = &command::invite;
 	_cmds["WHO"] = &command::who;
-	// _cmds["WHOIS"] = &command::whois;
-	// _cmds["WHOWAS"] = &command::whowas;
 }
 
 void command::exec(const std::string &client_data) 
@@ -252,9 +225,7 @@ void command::sendIt(std::string def, int fdClient)
 {
 	def += "\r\n";
 	def.insert(0, ":" + _server.getServerName() + " ");
-	
-	send(fdClient, def.c_str(), def.size(), 0);
-	
+	send(fdClient, def.c_str(), def.size(), 0);	
 }
 
 std::string command::getSenderNickname() 
@@ -266,4 +237,4 @@ std::string command::getSenderNickname()
 
 int command::getSenderFd() {return (_server.getPollFd()[_server.getIterator()].fd);}
 
-command::~command(){ P <<BOLD<< "COMMAND DESTRUCTEUR" <<RESET<< E;}
+command::~command(){;}

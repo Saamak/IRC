@@ -9,10 +9,9 @@ client::client()
     _passCheck = false;
     _nickCheck = false;
     _userCheck = false;
-    P <<BOLD<< "Client constructor" <<RESET<< E;
 }
 
-client::~client(){ P << "Client destructor" << E; }
+client::~client(){;}
 
 std::string client::getBufferClient() {return (_buffer_client);}
 

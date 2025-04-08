@@ -1,25 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Kick.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pirulenc <pirulenc@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 17:06:21 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/04/03 14:40:58 by pirulenc         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include "includes/colors.h"
 #include "includes/command.hpp"
-#include "includes/channel.hpp"
-#include "includes/IrcException.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <iostream>
-#include <sstream>
-#include <cstdlib> 
-#include <utility>
 
 void channel::removeUser(const std::string &nickname)
 {

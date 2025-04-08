@@ -5,9 +5,17 @@
 #include <string>
 #include "server.hpp"
 #include "client.hpp"
+#include "channel.hpp"
+#include "config.hpp"
+#include "IrcException.hpp"
+#include <iostream>
+#include <sstream>
+#include <cstdlib> 
+#include <utility>
+#include "colors.h"
 
 class command;
-// Déclaration du type de la fonction
+
 typedef void(command::*CommandFunction)(const std::string&);
 
 class command
@@ -28,24 +36,17 @@ public:
 	void 	who(const std::string& client_data);
 	void	createChannel(const std::string& channel_name, const std::string& password, const std::string& senderNickname, int sender_fd);
 	void    cap(const std::string &client_data);
-	size_t	getChanIterator(std::string channelname);
 	
-	// void part();
 	void    privmsg(const std::string &client_data);
 	void    invite(const std::string &client_data);
 	void    processChannelMessage(const std::string& targetChannel, const std::string& message, const std::string& nickname);
 	void    processPrivateMessage(const std::string& targetChannel, const std::string& message, const std::string& nickname);
-	// void notice();
 	void    quit(const std::string &client_data);
 	void    topic(const std::string &client_data);
 	void    mode(const std::string &client_data);
 	void    plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string password);
-	void    minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd);
+	void	minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string argument);
 	void    kick(const std::string &client_data);
-	// void invite();
-	// void who();
-	// void whois();
-	// void whowas();
 
 	void sendIt(std::string def, int fdClient);
 	std::vector<std::pair<std::string,std::string> > parsing_param_mode(const std::string &client_data);

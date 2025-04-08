@@ -1,25 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ModeSignPlus.cpp                                   :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/28 13:58:04 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/28 13:58:05 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
-#include <string>
 
 void command::plusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string argument)
 {
@@ -57,6 +37,16 @@ void command::plusSignMode(std::string channel_name, std::string mode, std::stri
                 }
                 targetChannel->addOperator(targetClient);
                 sendIt("User " + argument + " is now an operator in channel " + channel_name, sender_fd);
+                
+                std::string modeMessage = ":" + senderNickname + " MODE " + channel_name + " +o " + argument + "\r\n";
+                std::vector<client*> channelClients = targetChannel->getClients();
+                
+                for (size_t i = 0; i < channelClients.size(); i++)
+                {
+                    int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+                    if (client_fd != -1)
+                        send(client_fd, modeMessage.c_str(), modeMessage.size(), 0);
+                }
                 std::cout << "User " << argument << " added as operator in channel " << channel_name << std::endl;
                 return;
             }

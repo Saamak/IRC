@@ -1,26 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Nick.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 12:48:07 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 12:48:07 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "includes/command.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
-#include "includes/IrcException.hpp"
-
 
 void command::nick(const std::string &client_data) 
 {
@@ -103,32 +81,5 @@ void command::nick(const std::string &client_data)
             exec("QUIT");
     }
 }
-
-// If a NICK message arrives at a server which already knows about an
-//    identical nickname for another client, a nickname collision occurs.
-//    As a result of a nickname collision, all instances of the nickname
-//    are removed from the server's database, and a KILL command is issued
-//    to remove the nickname from all other server's database. If the NICK
-//    message causing the collision was a nickname change, then the
-//    original (old) nick must be removed as well.
-
-//    If the server recieves an identical NICK from a client which is
-//    directly connected, it may issue an ERR_NICKCOLLISION to the local
-//    client, drop the NICK command, and not generate any kills.
-
-
-
-// Oikarinen & Reed                                               [Page 14]
-
-
-// RFC 1459              Internet Relay Chat Protocol              May 1993
-
-
-//    Numeric Replies:
-
-//            ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
-//            ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
-
-//RPL_NICK
 
 

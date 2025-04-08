@@ -1,25 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Join.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 11:30:09 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/26 11:30:10 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "includes/command.hpp"
-#include "includes/IrcException.hpp"
-#include <iostream>
-#include "includes/colors.h"
-#include <sstream>
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/client.hpp"
-#include <cstdlib> 
-#include <utility>
 
 void command::createChannel(const std::string& channel_name, const std::string& password, const std::string& senderNickname, int sender_fd)
 {
@@ -40,9 +20,6 @@ void command::createChannel(const std::string& channel_name, const std::string& 
     std::string joinMessage = ":" + senderNickname + " JOIN " + channel_name + "\r\n";
     send(sender_fd, joinMessage.c_str(), joinMessage.size(), 0);
 
-    // 2. Envoyer TOPIC (ou NOTOPIC)
-    // sendIt(RPL_NOTOPIC(senderNickname, channel_name), sender_fd);
-
     // 3. Envoyer NAMREPLY et ENDOFNAMES
     std::string usersList = "@" + senderNickname;
     sendIt(RPL_NAMREPLY(senderNickname, channel_name, usersList), sender_fd);
@@ -61,7 +38,6 @@ void command::join(const std::string& client_data)
     
     try
     {
-        // Vérifications initiales
         if (channel_name.empty())
             throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "JOIN"));
         if (channel_name[0] != '#')
@@ -102,7 +78,7 @@ void command::join(const std::string& client_data)
                 sendIt(RPL_TOPIC(senderNickname, channel_name, targetChannel->getTopic()), sender_fd);
             else
                 sendIt(RPL_NOTOPIC(senderNickname, channel_name), sender_fd);
-            
+
             // Construire la liste des utilisateurs avec préfixes pour les opérateurs
             std::string usersList;
             for (std::vector<client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
@@ -115,9 +91,7 @@ void command::join(const std::string& client_data)
                     usersList += "@";
                     
                 usersList += (*it)->getNickname();
-                P << usersList << std::endl;
             }
-            
             // Envoyer la liste complète d'utilisateurs au nouveau client
             sendIt(RPL_NAMREPLY(senderNickname, channel_name, usersList), sender_fd);
             sendIt(RPL_ENDOFNAMES(senderNickname, channel_name), sender_fd);
@@ -127,7 +101,6 @@ void command::join(const std::string& client_data)
                 targetChannel->removeInvite(senderNickname);
             return;
         }
-        
         // Si le canal n'existe pas, le créer
         createChannel(channel_name, password, senderNickname, sender_fd);
     }

@@ -1,25 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   PrivMsg.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pirulenc <pirulenc@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/26 13:04:18 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/31 16:18:32 by pirulenc         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
-#include "includes/colors.h"
 #include "includes/command.hpp"
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/IrcException.hpp"
-#include "includes/client.hpp"
-#include <iostream>
-#include <sstream>
-#include <cstdlib> 
-#include <utility>
 
 void	command::processPrivateMessage(const std::string& targetUser, const std::string& message, const std::string& nickname)
 {

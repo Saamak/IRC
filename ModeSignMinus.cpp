@@ -1,27 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ModeSignMinus.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lvan-slu <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/28 13:58:08 by lvan-slu          #+#    #+#             */
-/*   Updated: 2025/03/28 13:58:08 by lvan-slu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include "includes/colors.h"
 #include "includes/command.hpp"
-#include "includes/channel.hpp"
-#include "includes/config.hpp"
-#include "includes/IrcException.hpp"
-#include "includes/client.hpp"
-#include <iostream>
-#include <sstream>
-#include <cstdlib> 
-#include <utility>
 
-void command::minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd)
+void command::minusSignMode(std::string channel_name, std::string mode, std::string senderNickname, int sender_fd, std::string argument)
 {
     for (size_t x = 0; x < _server.getChannelsList().size(); x++)
     {
@@ -39,15 +18,49 @@ void command::minusSignMode(std::string channel_name, std::string mode, std::str
             }
             else if (mode == "o") // Gestion du flag -o (retirer un opérateur)
             {
-                client* targetClient = _server.getClientByNickname(senderNickname);
-                if (!targetClient || !targetChannel->IsOperator(senderNickname))
+                if (argument.empty())
                 {
-                    sendIt(ERR_USERNOTINCHANNEL(senderNickname, senderNickname, channel_name), sender_fd);
+                    sendIt(ERR_NEEDMOREPARAMS(senderNickname, "MODE"), sender_fd);
                     return;
                 }
+                
+                // Vérification que l'émetteur est opérateur (autorisé à retirer le statut)
+                if (!targetChannel->IsOperator(senderNickname))
+                {
+                    sendIt(ERR_CHANOPRIVSNEEDED(senderNickname, channel_name), sender_fd);
+                    return;
+                }
+                
+                client* targetClient = _server.getClientByNickname(argument);
+                if (!targetClient || !targetChannel->IsInChannel(argument))
+                {
+                    sendIt(ERR_USERNOTINCHANNEL(senderNickname, argument, channel_name), sender_fd);
+                    return;
+                }
+                
+                if (!targetChannel->IsOperator(argument))
+                {
+                    sendIt("User " + argument + " is not an operator in channel " + channel_name, sender_fd);
+                    return;
+                }
+                
                 targetChannel->removeOperator(targetClient);
-                sendIt("User " + senderNickname + " is no longer an operator in channel " + channel_name, sender_fd);
-                std::cout << "User " << senderNickname << " removed as operator in channel " << channel_name << std::endl;
+                
+                // Envoyer confirmation à l'émetteur de la commande
+                sendIt("User " + argument + " is no longer an operator in channel " + channel_name, sender_fd);
+                
+                // Envoyer un message MODE IRC standard à tous les membres du canal
+                std::string modeMessage = ":" + senderNickname + " MODE " + channel_name + " -o " + argument + "\r\n";
+                std::vector<client*> channelClients = targetChannel->getClients();
+                
+                for (size_t i = 0; i < channelClients.size(); i++)
+                {
+                    int client_fd = _server.getClientFd(channelClients[i]->getNickname());
+                    if (client_fd != -1)
+                        send(client_fd, modeMessage.c_str(), modeMessage.size(), 0);
+                }
+                
+                std::cout << "User " << argument << " removed as operator in channel " << channel_name << std::endl;
                 return;
             }
             else if (mode == "i") // Gestion du flag -i (supprimer l'invitation uniquement)
