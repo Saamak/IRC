@@ -34,15 +34,18 @@ $(OBJ_DIR):
 
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+	${MAKE} -j -C ./BOT -s
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ_DIR)
+	${MAKE} -C ./BOT clean -s
 
 fclean: clean
 	rm -f $(NAME)
+	${MAKE} -C ./BOT fclean -s
 
 re: fclean all
 
