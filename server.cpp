@@ -97,7 +97,6 @@ bool Server::init(char *pass)
 		close(_server_fd);
 		return false;
 	}
-	
 	return true;
 }
 
@@ -178,8 +177,9 @@ void Server::start()
         if(exit_b == true)
 		{
             myExit();
+			return ;
 		}
-        int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
+		int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (poll_count < 0)
         {
             std::cerr << "Error: poll failed" << std::endl;
