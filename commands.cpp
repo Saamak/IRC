@@ -104,6 +104,7 @@ std::vector<std::pair<std::string,std::string> > command::parsing_param_mode(con
 
 void command::quit(const std::string &client_data) 
 {
+	std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
     std::vector<client*>& Client_tmp = _server.getClientList();
     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
     size_t iterator = _server.getIterator();
@@ -124,12 +125,11 @@ void command::quit(const std::string &client_data)
     client* client_to_remove = Client_tmp[index];
     if (client_to_remove) 
     {
-        std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
         if (quitMessage.empty())
-            quitMessage = "Leaving";
+            quitMessage = " left the server";
             
         std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
-                                     " QUIT :Quit: " + quitMessage + "\r\n";
+                                     " QUIT :" + quitMessage + "\r\n";
         
         // Notify channel members before removal
         std::vector<channel*>& channels = _server.getChannelsList();
