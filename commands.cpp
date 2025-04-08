@@ -120,7 +120,7 @@ void command::quit(const std::string &client_data)
         return;
     }
     
-    // Récupérer le client qui se déconnecte
+    // Get the client that's disconnecting
     client* client_to_remove = Client_tmp[index];
     if (client_to_remove) 
     {
@@ -131,13 +131,13 @@ void command::quit(const std::string &client_data)
         std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
                                      " QUIT :Quit: " + quitMessage + "\r\n";
         
-        // Notifier les membres des canaux avant la suppression
+        // Notify channel members before removal
         std::vector<channel*>& channels = _server.getChannelsList();
         for (size_t i = 0; i < channels.size(); ++i) 
         {
             if (channels[i]->IsInChannel(client_to_remove->getNickname()))
             {
-                // Envoyer le message à tous les membres du canal sauf à celui qui quitte
+                // Send message to all channel members except the one quitting
                 std::vector<client*> channelClients = channels[i]->getClients();
                 for (size_t j = 0; j < channelClients.size(); j++)
                 {
@@ -149,24 +149,98 @@ void command::quit(const std::string &client_data)
                     }
                 }
                 
-                // Maintenant retirer l'utilisateur du canal
+                // Now remove the user from the channel
                 channels[i]->removeUser(client_to_remove->getNickname());
                 
-                // Vérifier si le canal est vide
+                // Check if channel is empty
                 if (channels[i]->getNumberClient() == 0)
+                {
+                    channel* chan_to_delete = channels[i];
                     channels.erase(channels.begin() + i--);
+                    delete chan_to_delete;  // Important: delete the channel object
+                }
             }
         }
-        delete client_to_remove;
-        Client_tmp.erase(Client_tmp.begin() + index);
         
+        // First close the file descriptor
         if (iterator < pollfd_tmp.size()) 
         {
+            std::cout << "Closing fd: " << pollfd_tmp[iterator].fd << std::endl;  // Debug line
             close(pollfd_tmp[iterator].fd);
             pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
         }
+        
+        // Then delete the client object and remove from list
+        delete client_to_remove;
+        Client_tmp.erase(Client_tmp.begin() + index);
     }
 }
+
+// void command::quit(const std::string &client_data) 
+// {
+//     std::vector<client*>& Client_tmp = _server.getClientList();
+//     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
+//     size_t iterator = _server.getIterator();
+    
+//     if (iterator < 1 || iterator > Client_tmp.size()) 
+//     {
+//         P << "Invalid iterator: " << iterator << E;
+//         return;
+//     }
+    
+//     size_t index = iterator - 1;
+//     if (index >= Client_tmp.size()) {
+//         P << "Invalid client index: " << index << E;
+//         return;
+//     }
+    
+//     // Récupérer le client qui se déconnecte
+//     client* client_to_remove = Client_tmp[index];
+//     if (client_to_remove) 
+//     {
+//         std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
+//         if (quitMessage.empty())
+//             quitMessage = "Leaving";
+            
+//         std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
+//                                      " QUIT :Quit: " + quitMessage + "\r\n";
+        
+//         // Notifier les membres des canaux avant la suppression
+//         std::vector<channel*>& channels = _server.getChannelsList();
+//         for (size_t i = 0; i < channels.size(); ++i) 
+//         {
+//             if (channels[i]->IsInChannel(client_to_remove->getNickname()))
+//             {
+//                 // Envoyer le message à tous les membres du canal sauf à celui qui quitte
+//                 std::vector<client*> channelClients = channels[i]->getClients();
+//                 for (size_t j = 0; j < channelClients.size(); j++)
+//                 {
+//                     if (channelClients[j]->getNickname() != client_to_remove->getNickname())
+//                     {
+//                         int client_fd = _server.getClientFd(channelClients[j]->getNickname());
+//                         if (client_fd != -1)
+//                             send(client_fd, fullQuitMessage.c_str(), fullQuitMessage.size(), 0);
+//                     }
+//                 }
+                
+//                 // Maintenant retirer l'utilisateur du canal
+//                 channels[i]->removeUser(client_to_remove->getNickname());
+                
+//                 // Vérifier si le canal est vide
+//                 if (channels[i]->getNumberClient() == 0)
+//                     channels.erase(channels.begin() + i--);
+//             }
+//         }
+//         delete client_to_remove;
+//         Client_tmp.erase(Client_tmp.begin() + index);
+        
+//         if (iterator < pollfd_tmp.size()) 
+//         {
+//             close(pollfd_tmp[iterator].fd);
+//             pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
+//         }
+//     }
+// }
 
 void    command::cap(const std::string &client_data)
 {
