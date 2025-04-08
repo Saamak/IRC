@@ -36,16 +36,13 @@ int Server::getClientFd(const std::string &nickname) const
 
 
 void Server::integrity(std::string client_data) {
-	command cmdd(*this); // Passe une référence au serveur
+	command cmdd(*this);
 	cmdd.exec(client_data);
 }
 
 void Server::myExit()
 {
-    // 1. D'abord nettoyer tous les canaux
     clearChannels();
-
-    // 2. Ensuite libérer tous les clients
     for (size_t i = 0; i < client_lst.size(); ++i) {
         if (client_lst[i] != NULL) {
             delete client_lst[i];
@@ -53,8 +50,6 @@ void Server::myExit()
         }
     }
     client_lst.clear();
-
-    // 3. Fermer tous les descripteurs de fichiers
     for (size_t x = 0; x < _poll_fds.size(); x++)
         close(_poll_fds[x].fd);
     _poll_fds.clear();
@@ -100,7 +95,6 @@ bool Server::init(char *pass)
 	return true;
 }
 
-// Fonction pour diviser une chaîne de caractères par un délimiteur donné
 std::vector<std::string> split(const std::string& str, char delimiter) {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -121,9 +115,7 @@ void Server::clientConnected()
 		std::cerr << "Error: accept failed" << std::endl;
 		return ;
 	}
-	//check USER/NICK
 	std::cout << G"Client connected SAS\n" << RESET << std::endl;
-	
 	struct pollfd client_pollfd;
 	client_pollfd.fd = client_socket;
 	client_pollfd.events = POLLIN;

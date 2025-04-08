@@ -1,6 +1,6 @@
 NAME = bot
 
-SRC = main.cpp\
+SRC = Bot_main.cpp\
 		Bot_Draw.cpp\
 		Bot_Time.cpp
 

@@ -14,13 +14,11 @@ void command::pass(const std::string &client_data) // Pass daniel
 	size_t iterator = _server.getIterator() - 1;
 
 	if (password.empty()) {
-		// Utilisation de sendIrcMessage pour ERR_NEEDMOREPARAMS
 		sendIt(ERR_NEEDMOREPARAMS(Client_tmp[iterator]->getNickname(), command), fd);
 		return;
 	}
 
 	if (Client_tmp[iterator]->getRegistered()) {
-		// Utilisation de sendIrcMessage pour ERR_ALREADYREGISTRED
 		sendIt(ERR_ALREADYREGISTRED(Client_tmp[iterator]->getNickname()), fd);
 		return;
 	}

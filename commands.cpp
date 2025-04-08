@@ -193,10 +193,9 @@ command::command(Server& server) : _server(server)
 
 void command::exec(const std::string &client_data) 
 {
-	// _cmds est un map qui associe une commande à une fonction
 	std::stringstream iss(client_data);
 	std::string buff;
-	iss >> buff; //recupere le 1er mot de la cmd (JOIN etc)
+	iss >> buff;
 	std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff); // recherche si la command existe
 	if (it != _cmds.end()) 
 	{
@@ -218,6 +217,17 @@ void command::exec(const std::string &client_data)
 		std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
 		send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
 	}
+}
+
+bool command::isValidChannelName(const std::string& channelName)
+{
+    if (channelName.empty() || (channelName[0] != '#' && channelName[0] != '&'))
+        return false;
+    for (size_t i = 1; i < channelName.length(); ++i) {
+        if (channelName[i] == '#' || channelName[i] == '&')
+            return false;
+    }
+    return true;
 }
 
 void command::sendIt(std::string def, int fdClient)

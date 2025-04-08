@@ -21,7 +21,6 @@ SRC = main.cpp \
 	ModeSignPlus.cpp \
 	Part.cpp
 
-# Préfixer tous les objets avec le dossier obj/
 OBJ = $(addprefix $(OBJ_DIR)/, $(SRC:.cpp=.o))
 
 CXX = c++
@@ -29,20 +28,21 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 all: $(OBJ_DIR) $(NAME)
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+	${MAKE} -j -C ./BOT -s
 
 $(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ_DIR)
+	${MAKE} -C ./BOT clean -s
 
 fclean: clean
 	rm -f $(NAME)
+	${MAKE} -C ./BOT fclean -s
 
 re: fclean all
 
