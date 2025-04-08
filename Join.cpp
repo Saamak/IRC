@@ -40,7 +40,7 @@ void command::join(const std::string& client_data)
     {
         if (channel_name.empty())
             throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "JOIN"));
-        if (channel_name[0] != '#')
+        if (channel_name[0] != '#' || channel_name[0] != '&')
             throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
         
         channel* targetChannel = getChannel(channel_name);

@@ -14,7 +14,7 @@ try
 {
     if (channel_name.empty())
         throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, command));
-    if (channel_name[0] != '#')
+    if (channel_name[0] != '#' || channel_name[0] != '&')
         throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
 
     channel* targetChannel = getChannel(channel_name);
