@@ -182,7 +182,7 @@ command::command(Server& server) : _server(server)
 	_cmds["USER"] = &command::user;
 	_cmds["JOIN"] = &command::join;
 	_cmds["CAP"] = &command::cap;
-	// _cmds["PART"] = &command::part;
+	_cmds["PART"] = &command::part;
 	_cmds["PRIVMSG"] = &command::privmsg;
 	_cmds["QUIT"] = &command::quit;
 	_cmds["TOPIC"] = &command::topic;

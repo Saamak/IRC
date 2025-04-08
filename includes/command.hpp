@@ -36,6 +36,7 @@ public:
 	void 	who(const std::string& client_data);
 	void	createChannel(const std::string& channel_name, const std::string& password, const std::string& senderNickname, int sender_fd);
 	void    cap(const std::string &client_data);
+	void    part(const std::string &client_data);
 	
 	void    privmsg(const std::string &client_data);
 	void    invite(const std::string &client_data);

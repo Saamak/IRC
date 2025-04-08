@@ -176,7 +176,9 @@ void Server::start()
     {
         set_signal();
         if(exit_b == true)
+		{
             myExit();
+		}
         int poll_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (poll_count < 0)
         {
