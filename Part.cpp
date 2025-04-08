@@ -1,7 +1,5 @@
-#include "includes/command.hpp"
-//<< PART #nnnb :Leaving
-//>> @time=2025-04-08T09:08:50.098Z :Guest4120!~b@rtr.23.90.210.20.unyc.it PART #nnnb :Leaving
 
+#include "includes/command.hpp"
 #include "includes/command.hpp"
 #include "includes/response.hpp"
 
@@ -35,7 +33,7 @@ void command::part(const std::string &client_data)
         if (!targetChannel->IsInChannel(senderNickname))
             throw IrcException("ERR_NOTONCHANNEL", ERR_NOTONCHANNEL(senderNickname, channel_name));
         
-        // Création du message PART au format IRC
+        // Création du message PART 
         std::string fullPartMessage = ":" + senderNickname + " PART " + channel_name + " :" + "Leaving" + "\r\n";
         
         // Envoyer le message à tous les membres du canal
@@ -55,10 +53,8 @@ void command::part(const std::string &client_data)
             for (size_t i = 0; i < channels.size(); i++) {
                 if (channels[i]->getName() == channel_name) {
                     P << "Deleting empty channel: " << channel_name << std::endl;
-                    // D'abord libérer la mémoire
                     delete channels[i];
-                    channels[i] = NULL;  // Bonne pratique pour éviter une utilisation après libération
-                    // Puis retirer le pointeur du vecteur
+                    channels[i] = NULL;
                     channels.erase(channels.begin() + i);
                     break;
                 }

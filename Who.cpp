@@ -10,7 +10,6 @@ void command::who(const std::string& client_data)
     std::string senderNickname = getSenderNickname();
     int sender_fd = getSenderFd();
     
-    // Si le canal est spécifié
     if (!target.empty() && isValidChannelName(target))
     {
         channel* targetChannel = getChannel(target);
@@ -21,13 +20,11 @@ void command::who(const std::string& client_data)
             {
                 std::string nick = (*it)->getNickname();
                 std::string user = (*it)->getUsername();
-                if (user.empty()) user = nick; // Fallback si username n'est pas défini
+                if (user.empty()) user = nick;
                 
                 std::string whoReply = ":" + _server.getServerName() + " 352 " + senderNickname + " " + 
                                       target + " " + user + " localhost " + _server.getServerName() + " " + 
                                       nick + " H";
-                
-                // Ajouter @ si opérateur
                 if (targetChannel->IsOperator(nick))
                     whoReply += "@";
                     
