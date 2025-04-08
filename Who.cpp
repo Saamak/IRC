@@ -11,7 +11,7 @@ void command::who(const std::string& client_data)
     int sender_fd = getSenderFd();
     
     // Si le canal est spécifié
-    if (!target.empty() && (target[0] == '#' || target[0] != '&'))
+    if (!target.empty() && isValidChannelName(target))
     {
         channel* targetChannel = getChannel(target);
         if (targetChannel)

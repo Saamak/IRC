@@ -12,7 +12,7 @@ void command::invite(const std::string &client_data)
 
 	try 
 	{
-		if (channelName[0] != '#' || channelName[0] != '&' || targetNickname.empty() || channelName.empty())
+		if ((channelName[0] != '#' && channelName[0] != '&') || targetNickname.empty() || channelName.empty())
 			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "INVITE"));
 		
 		channel* targetChannel = getChannel(channelName);

@@ -176,71 +176,6 @@ void command::quit(const std::string &client_data)
     }
 }
 
-// void command::quit(const std::string &client_data) 
-// {
-//     std::vector<client*>& Client_tmp = _server.getClientList();
-//     std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
-//     size_t iterator = _server.getIterator();
-    
-//     if (iterator < 1 || iterator > Client_tmp.size()) 
-//     {
-//         P << "Invalid iterator: " << iterator << E;
-//         return;
-//     }
-    
-//     size_t index = iterator - 1;
-//     if (index >= Client_tmp.size()) {
-//         P << "Invalid client index: " << index << E;
-//         return;
-//     }
-    
-//     // Récupérer le client qui se déconnecte
-//     client* client_to_remove = Client_tmp[index];
-//     if (client_to_remove) 
-//     {
-//         std::string quitMessage = client_data.substr(client_data.find(" :") + 2);
-//         if (quitMessage.empty())
-//             quitMessage = "Leaving";
-            
-//         std::string fullQuitMessage = ":" + client_to_remove->getNickname() + 
-//                                      " QUIT :Quit: " + quitMessage + "\r\n";
-        
-//         // Notifier les membres des canaux avant la suppression
-//         std::vector<channel*>& channels = _server.getChannelsList();
-//         for (size_t i = 0; i < channels.size(); ++i) 
-//         {
-//             if (channels[i]->IsInChannel(client_to_remove->getNickname()))
-//             {
-//                 // Envoyer le message à tous les membres du canal sauf à celui qui quitte
-//                 std::vector<client*> channelClients = channels[i]->getClients();
-//                 for (size_t j = 0; j < channelClients.size(); j++)
-//                 {
-//                     if (channelClients[j]->getNickname() != client_to_remove->getNickname())
-//                     {
-//                         int client_fd = _server.getClientFd(channelClients[j]->getNickname());
-//                         if (client_fd != -1)
-//                             send(client_fd, fullQuitMessage.c_str(), fullQuitMessage.size(), 0);
-//                     }
-//                 }
-                
-//                 // Maintenant retirer l'utilisateur du canal
-//                 channels[i]->removeUser(client_to_remove->getNickname());
-                
-//                 // Vérifier si le canal est vide
-//                 if (channels[i]->getNumberClient() == 0)
-//                     channels.erase(channels.begin() + i--);
-//             }
-//         }
-//         delete client_to_remove;
-//         Client_tmp.erase(Client_tmp.begin() + index);
-        
-//         if (iterator < pollfd_tmp.size()) 
-//         {
-//             close(pollfd_tmp[iterator].fd);
-//             pollfd_tmp.erase(pollfd_tmp.begin() + iterator);
-//         }
-//     }
-// }
 
 void    command::cap(const std::string &client_data)
 {
@@ -268,10 +203,9 @@ command::command(Server& server) : _server(server)
 
 void command::exec(const std::string &client_data) 
 {
-	// _cmds est un map qui associe une commande à une fonction
 	std::stringstream iss(client_data);
 	std::string buff;
-	iss >> buff; //recupere le 1er mot de la cmd (JOIN etc)
+	iss >> buff;
 	std::map<std::string, CommandFunction>::iterator it = _cmds.find(buff); // recherche si la command existe
 	if (it != _cmds.end()) 
 	{
@@ -293,6 +227,17 @@ void command::exec(const std::string &client_data)
 		std::vector<struct pollfd>& pollfd_tmp = _server.getPollFd();
 		send(pollfd_tmp[_server.getIterator()].fd, message.c_str(), message.size(), 0);
 	}
+}
+
+bool command::isValidChannelName(const std::string& channelName)
+{
+    if (channelName.empty() || (channelName[0] != '#' && channelName[0] != '&'))
+        return false;
+    for (size_t i = 1; i < channelName.length(); ++i) {
+        if (channelName[i] == '#' || channelName[i] == '&')
+            return false;
+    }
+    return true;
 }
 
 void command::sendIt(std::string def, int fdClient)

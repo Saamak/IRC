@@ -50,6 +50,7 @@ public:
 	void    kick(const std::string &client_data);
 
 	void sendIt(std::string def, int fdClient);
+	bool isValidChannelName(const std::string& channelName);
 	std::vector<std::pair<std::string,std::string> > parsing_param_mode(const std::string &client_data);
 	std::pair<std::string,std::string> get_mode_and_sign(std::string flag);
 	std::string get_previous_sign(std::string flag);

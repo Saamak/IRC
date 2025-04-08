@@ -64,7 +64,7 @@ void command::privmsg(const std::string &client_data)
 		if (message.empty())
 			throw IrcException("ERR_NOTEXTTOSEND", ERR_NOTEXTTOSEND(senderNickname));
 
-		if (targetType[0] == '#' || targetType[0] != '&')
+		if (isValidChannelName(targetType))
 			processChannelMessage(targetType, message, senderNickname);
 		else 
 			processPrivateMessage(targetType, message, senderNickname);

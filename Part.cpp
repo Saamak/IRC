@@ -25,7 +25,7 @@ void command::part(const std::string &client_data)
         if (channel_name.empty())
             throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "PART"));
         
-        if (channel_name[0] != '#' && channel_name[0] != '&')
+        if (!isValidChannelName(channel_name))
             throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
         
         channel* targetChannel = getChannel(channel_name);

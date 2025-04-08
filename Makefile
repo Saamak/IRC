@@ -28,14 +28,12 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 all: $(OBJ_DIR) $(NAME)
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 	${MAKE} -j -C ./BOT -s
 
 $(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:

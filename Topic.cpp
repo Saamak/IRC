@@ -15,8 +15,8 @@ void command::topic(const std::string &client_data)
         if (channel_name.empty())
             throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "TOPIC"));
             
-        if (channel_name[0] != '#' || channel_name[0] != '&')
-            throw IrcException("ERR_NOSUCHCHANNEL", ERR_NOSUCHCHANNEL(senderNickname, channel_name));
+        if (!isValidChannelName(channel_name))
+            throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, channel_name));
             
         channel* targetChannel = getChannel(channel_name);
         if (!targetChannel)
@@ -49,7 +49,7 @@ void command::topic(const std::string &client_data)
             if (targetChannel->getOpTopic() && !targetChannel->IsOperator(senderNickname))
                 throw IrcException("ERR_CHANOPRIVSNEEDED", ERR_CHANOPRIVSNEEDED(senderNickname, channel_name));
             
-            // Changer le sujet
+            // Changer le topic
             targetChannel->setTopic(topic_name);
             
             // Notifier tous les clients du canal

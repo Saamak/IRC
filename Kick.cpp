@@ -39,7 +39,7 @@ void command::kick(const std::string &client_data)
 			comment = client_data.substr(colonPos + 1);
 		}
 		
-		if (channelName[0] != '#' || channelName[0] != '&' || targetNickname.empty() || channelName.empty())
+		if ((channelName[0] != '#' && channelName[0] != '&') || targetNickname.empty() || channelName.empty())
 			throw IrcException("ERR_NEEDMOREPARAMS", ERR_NEEDMOREPARAMS(senderNickname, "KICK"));
 		if (!_server.clientExists(targetNickname))
 			throw IrcException("ERR_NOSUCHNICK", ERR_NOSUCHNICK(senderNickname, targetNickname));
