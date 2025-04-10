@@ -202,17 +202,33 @@ void Server::start()
 
 int Server::HandleCommunication(int i)
 {
-	char buffer[1024];
-	memset(buffer, 0, sizeof(buffer));
-	
-	int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer) - 1);
-	
-	if (bytes_read <= 0) 
-	{
-		std::cout << "Client disconnected" << std::endl;
-		integrity("QUIT");
-		return (i);
-	}
+    char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));
+    
+    int bytes_read = read(_poll_fds[i].fd, buffer, sizeof(buffer) - 1);
+    
+    if (bytes_read <= 0) 
+    {
+        std::cout << "Client disconnected" << std::endl;
+        
+        // 1. Close the socket first
+        close(_poll_fds[i].fd);
+        
+        // 2. Remove from poll_fds vector - adjust for zero-indexing
+        _poll_fds.erase(_poll_fds.begin() + i);
+        
+        // 3. Delete the client object (i-1 since first poll_fd is the server)
+        if (i-1 >= 0 && i-1 < client_lst.size()) {
+            delete client_lst[i-1];
+            client_lst.erase(client_lst.begin() + (i-1));
+        }
+        
+        // 4. Let command handle any additional application logic
+        integrity("QUIT");
+        
+        // Since we removed an element, don't increment i in the loop
+        return (i-1);
+    }
 	
 	buffer[bytes_read] = '\0';
 	std::string client_test(buffer);
